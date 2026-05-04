@@ -1,3 +1,4 @@
+#include <exception>
 #include <iostream> // remove later
 
 #include <mutex>
@@ -10,7 +11,6 @@
 #include <asio.hpp>
 
 #include "tcp_connection.hpp"
-#include "tcp_macros.hpp"
 #include "tcp_common.hpp"
 #include "registry.hpp"
 
@@ -58,10 +58,16 @@ public:
             m_accepting = true;
 
             // try setup acceptor for esps to connect 
-            EC_TRY_OR_RTN(m_acceptor.open(m_endpoint.protocol()), ec);
-            EC_TRY_OR_RTN(m_acceptor.set_option(ip::tcp::acceptor::reuse_address(true)), ec);
-            EC_TRY_OR_RTN(m_acceptor.bind(ip::tcp::endpoint(m_endpoint)), ec);
-            EC_TRY_OR_RTN(m_acceptor.listen(), ec);
+            try {
+                m_acceptor.open(m_endpoint.protocol());
+                m_acceptor.set_option(ip::tcp::acceptor::reuse_address(true));
+                m_acceptor.bind(ip::tcp::endpoint(m_endpoint));
+            }
+            catch(const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+            }
+
+            m_acceptor.listen();
 
             // start listening
             wait_for_connection();

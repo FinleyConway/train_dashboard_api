@@ -6,7 +6,6 @@
 #include <optional>
 
 #include <asio.hpp>
-#include <sys/types.h>
 
 #include "tcp_common.hpp"
 
