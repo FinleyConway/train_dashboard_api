@@ -3,19 +3,13 @@ project(esp_networking LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF) # hush clangd
 
-add_subdirectory(vendors/imtui)
 add_subdirectory(vendors/spdlog)
 add_subdirectory(common)
 
 add_executable(esp_networking
     server_gui/src/main.cpp
-    server_gui/src/networking/tcp_logger.hpp
-    server_gui/src/networking/tcp_server.hpp
-    server_gui/src/networking/tcp_client_observer.hpp
-    server_gui/src/networking/tcp_connection.hpp
-    server_gui/src/gui/gui_window.hpp
 )
 
 target_include_directories(esp_networking PRIVATE
@@ -28,6 +22,5 @@ target_compile_definitions(esp_networking PRIVATE
 
 target_link_libraries(esp_networking PRIVATE
     spdlog::spdlog_header_only
-    imtui-ncurses
     common
 )
