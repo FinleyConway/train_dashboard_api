@@ -6,6 +6,8 @@
 #include "types/restart_esp.hpp"
 
 namespace common {
+    using esp_id_t = uint16_t;
+
     using registry_t = packet_registry_impl_t<
         init_esp_t,
         restart_esp_t

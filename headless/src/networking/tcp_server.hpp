@@ -11,7 +11,6 @@
 #include <asio.hpp>
 
 #include "tcp_connection.hpp"
-#include "tcp_common.hpp"
 #include "registry.hpp"
 
 namespace ip = asio::ip;
@@ -82,7 +81,7 @@ public:
     }
 
     template<typename T>
-    bool send_to_client(esp_id_t client_id, const T& data) {
+    bool send_to_client(common::esp_id_t client_id, const T& data) {
         std::lock_guard lock(m_connection_mutex);
 
         auto it = m_connections.find(client_id);
@@ -116,7 +115,7 @@ public:
         }
     }
 
-    bool disconnect_client(esp_id_t client_id) {
+    bool disconnect_client(common::esp_id_t client_id) {
         std::lock_guard lock(m_connection_mutex);
 
         auto it = m_connections.find(client_id);
@@ -186,9 +185,9 @@ private:
     bool m_configured = false;
     std::atomic<bool> m_accepting = false;
 
-    std::unordered_map<esp_id_t, tcp_connection_ptr_t> m_connections;
+    std::unordered_map<common::esp_id_t, tcp_connection_ptr_t> m_connections;
     std::mutex m_connection_mutex;
-    esp_id_t m_connection_count = 0;
+    common::esp_id_t m_connection_count = 0;
 
     common::registry_t m_registry;
 };

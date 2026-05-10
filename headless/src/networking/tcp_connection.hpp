@@ -7,7 +7,6 @@
 
 #include <asio.hpp>
 
-#include "tcp_common.hpp"
 #include "registry.hpp"
 
 namespace ip = asio::ip;
@@ -25,7 +24,7 @@ public:
         return m_socket;
     }
 
-    void set_connection_id(esp_id_t id) {
+    void set_connection_id(common::esp_id_t id) {
         m_connection_id = id;
     }
 
@@ -144,7 +143,7 @@ private:
 
 private:
     ip::tcp::socket m_socket;
-    esp_id_t m_connection_id;
+    common::esp_id_t m_connection_id;
 
     on_receive_t m_receive_callback;
 
