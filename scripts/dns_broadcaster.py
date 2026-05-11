@@ -6,7 +6,7 @@ import signal
 import socket
 from zeroconf import ServiceInfo, Zeroconf
 
-class dns_responder:
+class dns_broadcaster:
     def __init__(self, ip, port):
         self._info = ServiceInfo(
             "_mytcp._tcp.local.",
@@ -38,7 +38,7 @@ def main():
     ip = sys.argv[1]
     port = sys.argv[2]
 
-    dns = dns_responder(ip, port)
+    dns = dns_broadcaster(ip, port)
     dns.run()
 
 if __name__ == "__main__":
