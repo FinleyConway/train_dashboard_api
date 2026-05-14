@@ -29,8 +29,8 @@ namespace common {
     class packet_registry_impl_t {
     private:
         using packet_id_t = uint16_t;
-        using packet_bytes_view = std::span<uint8_t>;
-        using callback_fn = void(*)(packet_bytes_view);
+        using payload_view_t = std::span<uint8_t>;
+        using callback_fn = void(*)(payload_view_t);
 
     public:
         template<typename T, typename Fn>
@@ -85,7 +85,7 @@ namespace common {
                     return packet_error_t::invalid_packet_bytes;
                 }
 
-                callback.invoker(packet_bytes_view(buffer.data() + packet_id_size, callback.bytes));
+                callback.invoker(payload_view_t(buffer.data() + packet_id_size, callback.bytes));
             }
         }
 
@@ -96,7 +96,7 @@ namespace common {
             auto& callback = m_callback[get_type_id<T>()];
             
             callback.bytes = sizeof(typename T::net_t);
-            callback.invoker = [](packet_bytes_view bytes) {
+            callback.invoker = [](payload_view_t bytes) {
                 typename T::net_t net_data{};
                 std::memcpy(&net_data, bytes.data(), sizeof(net_data));
 
