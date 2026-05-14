@@ -117,24 +117,58 @@ namespace client {
             return tcp_status_t::success;
         }
 
-        tcp_status_t receieve_from(common::payload_t& buffer_out, size_t& bytes) {
-            common::payload_t buffer;
-            size_t total_bytes_received = 0;
+        tcp_status_t recv_exact(uint8_t* dst, size_t bytes_to_read, size_t& bytes_read) {
+            bytes_read = 0;
 
-            while (true) { // not sure about this
-                ssize_t bytes_received = recv(
+            while (bytes_read < bytes_to_read) {
+                ssize_t result = recv(
                     m_socket,
-                    buffer.data() + total_bytes_received,
-                    buffer.size() - total_bytes_received,
+                    dst + bytes_read,
+                    bytes_to_read - bytes_read,
                     0
                 );
 
-                if (bytes_received == -1) return tcp_status_t::failure;
-                if (bytes_received == 0) break;            
+                if (result == -1) return tcp_status_t::failure;
+                if (result == 0) return tcp_status_t::connection_closed;
+
+                bytes_read += result;
             }
 
+            return tcp_status_t::success;
+        }
+
+        tcp_status_t receieve_from(common::payload_t& buffer_out, size_t& bytes) {
+            constexpr size_t esp_id_size = sizeof(common::esp_id_t);
+            common::payload_t buffer;
+            size_t bytes_read = 0;
+
+            // receive the id from stream
+            tcp_status_t status = recv_exact(
+                buffer.data(), 
+                esp_id_size, 
+                bytes_read
+            );
+
+            if (status != tcp_status_t::success) return status;
+
+            // get the payload size from the received id
+            common::esp_id_t received_id = 0;
+            std::memcpy(&received_id, buffer.data(), esp_id_size);
+
+            size_t expected_bytes = m_registry.get_packet_bytes(received_id);
+            size_t payload_bytes = 0;
+
+            // read the remaining payload
+            status = recv_exact(
+                buffer.data() + bytes_read, 
+                expected_bytes - bytes_read,
+                payload_bytes
+            );
+
+            if (status != tcp_status_t::success) return status;
+
+            bytes = bytes_read + payload_bytes;
             buffer_out = buffer;
-            bytes = total_bytes_received;
 
             return tcp_status_t::success;
         }

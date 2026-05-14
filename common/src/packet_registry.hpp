@@ -105,6 +105,14 @@ namespace common {
             };
         }
 
+        size_t get_packet_bytes(packet_id_t packed_id) const {
+            if (packed_id >= m_callback.size()) {
+                return 0;
+            }
+
+            return m_callback.at(packed_id).bytes;
+        }
+
         static consteval size_t get_max_payload() {
             return get_max_bytes() + sizeof(packet_id_t);
         }

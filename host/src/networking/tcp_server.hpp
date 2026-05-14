@@ -53,8 +53,6 @@ namespace host {
                 return;
             }
 
-            std::error_code ec;
-
             if (enable) {
                 // prevent accepting when its already open
                 if (m_acceptor.is_open()) return;
