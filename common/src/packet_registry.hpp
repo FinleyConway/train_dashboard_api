@@ -19,11 +19,22 @@ namespace common {
     && std::is_trivially_copyable_v<typename T::net_t>
     && std::is_standard_layout_v<typename T::net_t>;
 
+
     template<packet_type... Ts>
     class packet_registry_impl_t {
+    private:
+        static consteval size_t get_max_bytes() {
+            size_t max = 0;
+            ((max = std::max(max, sizeof(typename Ts::net_t))), ...);
+            return max;
+        }
+
+        static constexpr size_t c_packet_id_size = sizeof(uint16_t);
+        static constexpr size_t c_max_payload = get_max_bytes() + c_packet_id_size;
+
     public:
         using packet_id_t = uint16_t;
-        using payload_t = std::array<uint8_t, packet_registry_impl_t<...Ts>::c_max_payload>;
+        using payload_t = std::array<uint8_t, c_max_payload>;
         using payload_view_t = std::span<uint8_t>;
 
     public:
@@ -34,9 +45,10 @@ namespace common {
             // set up buffer and data 
             payload_t buffer;
             typename T::net_t net_data = T::to_net(data);
+            constexpr packet_id_t packet_id = get_type_id<T>();
 
             // copy data into the buffer
-            std::memcpy(buffer.data(), &get_type_id<T>(), c_packet_id_size); 
+            std::memcpy(buffer.data(), &packet_id, c_packet_id_size); 
             std::memcpy(buffer.data() + c_packet_id_size, &net_data, sizeof(net_data)); 
 
             return buffer;
@@ -57,7 +69,7 @@ namespace common {
             return m_callback.at(get_type_id<T>()).bytes;
         }
 
-        bool dispatch(packet_id_t packet_id, const payload_t& payload, size_t bytes_received) {
+        bool dispatch(packet_id_t packet_id, payload_t&& payload, size_t bytes_received) {
             // prevent invalid packet ids
             if (packet_id >= m_callback.size()) return false;
 
@@ -113,10 +125,9 @@ namespace common {
             }
         }
 
-        static consteval size_t get_max_bytes() {
-            size_t max = 0;
-            ((max = std::max(max, sizeof(typename Ts::net_t))), ...);
-            return max;
+        template<typename T>
+        static consteval size_t get_type_id() {
+            return type_index_impl<T, Ts...>();
         }
 
         template<typename T>
@@ -126,8 +137,5 @@ namespace common {
 
     private:
         std::array<callback_info_t, sizeof...(Ts)> m_callback;
-
-        static constexpr size_t c_packet_id_size = sizeof(packet_id_t);
-        static constexpr size_t c_max_payload = get_max_bytes() + c_packet_id_size;
     };
 }
