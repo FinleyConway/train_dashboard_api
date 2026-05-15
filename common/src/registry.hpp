@@ -6,12 +6,13 @@
 #include "types/restart_esp.hpp"
 
 namespace common {
-    using esp_id_t = uint16_t;
 
     using registry_t = packet_registry_impl_t<
         init_esp_t,
         restart_esp_t
     >;
 
-    using payload_t = std::array<uint8_t, registry_t::get_max_payload()>;
+    using esp_id_t = registry_t::packet_id_t;
+    using payload_t = registry_t::payload_t;
+    using payload_view_t = registry_t::payload_view_t;
 }

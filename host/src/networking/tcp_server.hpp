@@ -91,7 +91,7 @@ namespace host {
 
             std::cout << "Sending to client " << client_id << '\n';
 
-            m_registry.send<T>([connection = it->second](common::payload_t&& buffer) {
+            m_registry.create_payload<T>([connection = it->second](common::payload_t&& buffer) {
                 connection->send(std::move(buffer));
             });
 

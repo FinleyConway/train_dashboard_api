@@ -11,7 +11,11 @@ namespace client {
     enum class tcp_status_t {
         success,
         failure,
-        connection_closed
+        connection_closed,
+        socket_failure,
+        failed_to_connect,
+        unknown_mds_address,
+        unknown_packet
     };
 
     class tcp_client_t {
@@ -20,42 +24,38 @@ namespace client {
             return m_socket;
         }
 
-        tcp_status_t connect_to(const char* address, const char* port) {
+        tcp_status_t connect_to(const char* mdns_address, const char* port) {
             struct addrinfo hints = {
                 .ai_family = AF_INET,
                 .ai_socktype = SOCK_STREAM
             };
             struct addrinfo* res;
-            int error = getaddrinfo(address, port, &hints, &res);
 
-            if (error == 0) {
+            // try to get the address from mdns name
+            if (getaddrinfo(mdns_address, port, &hints, &res) == 0) {
                 int socket_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
                 if (socket_fd < 0) {
-                    ESP_LOGE(s_tag, "Failed to create a socket");
-
-                    return tcp_status_t::failure;
+                    return tcp_status_t::socket_failure;
                 }
 
                 if (connect(socket_fd, res->ai_addr, res->ai_addrlen) < 0) {
-                    ESP_LOGE(s_tag, "Failed to connect to server");
-
                     disconnect();
 
-                    return tcp_status_t::failure;
+                    return tcp_status_t::failed_to_connect;
                 }
 
                 m_socket = socket_fd;
+
+                return tcp_status_t::success;
             }
 
-            return tcp_status_t::success;
+            return tcp_status_t::unknown_mds_address;
         }
 
         tcp_status_t disconnect() {
             if (close(m_socket) < 0) {
-                ESP_LOGE(s_tag, "Failed to close socket");
-
-                return tcp_status_t::failure;
+                return tcp_status_t::socket_failure;
             }
 
             return tcp_status_t::success;
@@ -72,39 +72,14 @@ namespace client {
 
         template<typename T>
         tcp_status_t send_to_server(common::esp_id_t client_id, const T& data) {
-            tcp_client_t status;
-
-            m_registry.send<T>([&](common::payload_t&& buffer) {
-                status = send_to(std::move(buffer));
-            });
-
-            return status;
-        }
-
-        tcp_status_t listen_to_server() {
-            tcp_status_t status;
-
-            m_registry.listen([&](common::payload_t& buffer) {
-                size_t bytes_received = 0;
-
-                status = receieve_from(buffer, bytes_received);
-
-                return bytes_received;
-            });
-
-            return status;
-        }
-
-    private:
-        tcp_status_t send_to(common::payload_t&& b) {
-            common::payload_t buffer = std::move(b);
+            common::payload_t payload = m_registry.create_payload<T>(data);
             size_t total_bytes_send = 0;
 
-            while (total_bytes_send < buffer.size()) {
+            while (total_bytes_send < payload.size()) {
                 ssize_t bytes_sent = send(
                     m_socket,
-                    buffer.data() + total_bytes_send,
-                    buffer.size() - total_bytes_send,
+                    payload.data() + total_bytes_send,
+                    payload.size() - total_bytes_send,
                     0
                 );
 
@@ -117,6 +92,47 @@ namespace client {
             return tcp_status_t::success;
         }
 
+        tcp_status_t listen_to_server() {
+            constexpr size_t esp_id_size = sizeof(common::esp_id_t);
+            common::registry_t::payload_t payload;
+            size_t bytes_read = 0;
+
+            // receive the id
+            tcp_status_t status = recv_exact(
+                payload.data(), 
+                esp_id_size, 
+                bytes_read
+            );
+
+            if (status != tcp_status_t::success) return status;
+
+            // get the payload size from the received id
+            common::esp_id_t received_id = 0;
+            std::memcpy(&received_id, payload.data(), esp_id_size);
+
+            // get the expected payload size
+            if (size_t expected_bytes = m_registry.get_packet_bytes(received_id); expected_bytes != 0) {
+                size_t payload_bytes = 0;
+
+                // read the remaining payload
+                status = recv_exact(
+                    payload.data() + bytes_read, 
+                    expected_bytes - bytes_read,
+                    payload_bytes
+                );
+
+                if (status != tcp_status_t::success) return status;
+
+                // notify of received data
+                if (!m_registry.dispatch(received_id, payload, bytes_read + payload_bytes)) {
+                    return tcp_status_t::unknown_packet;
+                }
+            }
+
+            return status;
+        }
+
+    private:
         tcp_status_t recv_exact(uint8_t* dst, size_t bytes_to_read, size_t& bytes_read) {
             bytes_read = 0;
 
@@ -133,42 +149,6 @@ namespace client {
 
                 bytes_read += result;
             }
-
-            return tcp_status_t::success;
-        }
-
-        tcp_status_t receieve_from(common::payload_t& buffer_out, size_t& bytes) {
-            constexpr size_t esp_id_size = sizeof(common::esp_id_t);
-            common::payload_t buffer;
-            size_t bytes_read = 0;
-
-            // receive the id from stream
-            tcp_status_t status = recv_exact(
-                buffer.data(), 
-                esp_id_size, 
-                bytes_read
-            );
-
-            if (status != tcp_status_t::success) return status;
-
-            // get the payload size from the received id
-            common::esp_id_t received_id = 0;
-            std::memcpy(&received_id, buffer.data(), esp_id_size);
-
-            size_t expected_bytes = m_registry.get_packet_bytes(received_id);
-            size_t payload_bytes = 0;
-
-            // read the remaining payload
-            status = recv_exact(
-                buffer.data() + bytes_read, 
-                expected_bytes - bytes_read,
-                payload_bytes
-            );
-
-            if (status != tcp_status_t::success) return status;
-
-            bytes = bytes_read + payload_bytes;
-            buffer_out = buffer;
 
             return tcp_status_t::success;
         }

@@ -8,12 +8,6 @@
 #include <algorithm> 
 
 namespace common {
-    enum class packet_error_t {
-        invalid_packet,
-        invalid_packet_id,
-        invalid_packet_bytes
-    };
-
     template<typename T>
     concept packet_type =
     requires(T obj, typename T::net_t net) {
@@ -27,66 +21,54 @@ namespace common {
 
     template<packet_type... Ts>
     class packet_registry_impl_t {
-    private:
+    public:
         using packet_id_t = uint16_t;
+        using payload_t = std::array<uint8_t, packet_registry_impl_t<...Ts>::c_max_payload>;
         using payload_view_t = std::span<uint8_t>;
-        using callback_fn = void(*)(payload_view_t);
 
     public:
-        template<typename T, typename Fn>
-        void send(const T& data, Fn&& fn) {
+        template<typename T>
+        payload_t create_payload(const T& data) {
             static_assert(has_type<T>(), "T must be in Ts...");
 
-            constexpr packet_id_t packet_id = get_type_id<T>();
-            constexpr size_t packet_id_size = sizeof(packet_id_t);
-            constexpr size_t packet_size = get_max_bytes() + packet_id_size;
-
             // set up buffer and data 
+            payload_t buffer;
             typename T::net_t net_data = T::to_net(data);
-            std::array<uint8_t, packet_size> buffer;
 
             // copy data into the buffer
-            std::memcpy(buffer.data(), &packet_id, packet_id_size); 
-            std::memcpy(buffer.data() + packet_id_size, &net_data, sizeof(net_data)); 
+            std::memcpy(buffer.data(), &get_type_id<T>(), c_packet_id_size); 
+            std::memcpy(buffer.data() + c_packet_id_size, &net_data, sizeof(net_data)); 
 
-            // give the network ownership of the buffer for async use
-            std::forward<Fn>(fn)(std::move(buffer));
+            return buffer;
         }
 
-        template<typename Fn>
-        packet_error_t listen(Fn&& fn) {
-            constexpr size_t packet_id_size = sizeof(packet_id_t);
-            constexpr size_t packet_size = get_max_bytes() + packet_id_size;
-            
-            // set up buffer and receive bytes from network
-            std::array<uint8_t, packet_size> buffer;
-            size_t bytes_received = std::forward<Fn>(fn)(buffer);
-
-            // have we gotten the minimum bytes needed?
-            if (bytes_received < packet_id_size) {
-                return packet_error_t::invalid_packet;
+        size_t get_packet_bytes(packet_id_t packed_id) const {
+            if (packed_id >= m_callback.size()) {
+                return 0;
             }
 
-            // get the id and perform a lookup to callback network for type that was received
-            packet_id_t packet_id = 0;
-            std::memcpy(&packet_id, buffer.data(), packet_id_size);
+            return m_callback.at(packed_id).bytes;
+        }
 
-            // have we gotten a valid id?
-            if (packet_id >= m_callback.size()) {
-                return packet_error_t::invalid_packet_id;
-            }
+        bool dispatch(packet_id_t packet_id, const payload_t& payload, size_t bytes_received) {
+            // prevent invalid packet ids
+            if (packet_id >= m_callback.size()) return false;
 
             // call the callback if one has been registered
             auto& callback = m_callback[packet_id];
+            bool has_callback = callback.invoker != nullptr && callback.bytes != 0;
+            bool do_bytes_match = callback.bytes == bytes_received - c_packet_id_size;
 
-            if (callback.invoker != nullptr) {
-                // have we received the correct size of bytes?
-                if (bytes_received != packet_id_size + callback.bytes) {
-                    return packet_error_t::invalid_packet_bytes;
-                }
+            if (has_callback) {
+                if (!do_bytes_match) return false;
 
-                callback.invoker(payload_view_t(buffer.data() + packet_id_size, callback.bytes));
+                callback.invoker(payload_view_t(
+                    payload.data() + c_packet_id_size, // offset id bytes to just give payload
+                    callback.bytes
+                ));
             }
+
+            return true;
         }
 
         template<typename T, auto Fn>
@@ -105,19 +87,9 @@ namespace common {
             };
         }
 
-        size_t get_packet_bytes(packet_id_t packed_id) const {
-            if (packed_id >= m_callback.size()) {
-                return 0;
-            }
-
-            return m_callback.at(packed_id).bytes;
-        }
-
-        static consteval size_t get_max_payload() {
-            return get_max_bytes() + sizeof(packet_id_t);
-        }
-
     private:
+        using callback_fn = void(*)(payload_view_t);
+
         struct callback_info_t {
             callback_fn invoker = nullptr; 
             size_t bytes = 0;
@@ -152,5 +124,8 @@ namespace common {
 
     private:
         std::array<callback_info_t, sizeof...(Ts)> m_callback;
+
+        static constexpr size_t c_packet_id_size = sizeof(packet_id_t);
+        static constexpr size_t c_max_payload = get_max_bytes() + c_packet_id_size;
     };
 }
