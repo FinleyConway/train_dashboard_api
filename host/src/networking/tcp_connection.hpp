@@ -52,7 +52,7 @@ namespace host {
                 std::move(payload),
                 payload_bytes
             );
-
+            
             if (!m_writing) {
                 write();
             }
