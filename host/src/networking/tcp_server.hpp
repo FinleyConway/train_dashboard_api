@@ -26,7 +26,8 @@ namespace host {
     public:
         tcp_server_t(const ip::tcp& protocol, uint16_t port) : 
             m_acceptor(m_io_context),
-            m_endpoint(ip::tcp::endpoint(protocol, port))
+            m_endpoint(ip::tcp::endpoint(protocol, port)),
+            m_work_guard(asio::make_work_guard(m_io_context))
         {
         }
 
@@ -76,6 +77,8 @@ namespace host {
             else {
                 m_acceptor.close();
             }
+
+            return tcp_status_t::success;
         }
 
         template<typename T>
@@ -89,7 +92,7 @@ namespace host {
 
             bool success = it->second->send(
                 m_registry.create_payload(data),
-                m_registry.get_packet_bytes<T>()
+                m_registry.get_packet_bytes<T>() + sizeof(common::esp_id_t)
             );
 
             if (!success) return tcp_status_t::no_client_connection;
@@ -154,6 +157,7 @@ namespace host {
 
             if (error) {
                 //std::cout << "Accepting incoming client failed: " << error.message() << "\n";
+                wait_for_connection();
                 return; 
             }
 
@@ -175,6 +179,7 @@ namespace host {
         asio::io_context m_io_context;
         ip::tcp::acceptor m_acceptor;
         std::thread m_io_thread;
+        asio::executor_work_guard<asio::io_context::executor_type> m_work_guard;
 
         ip::tcp::endpoint m_endpoint;
 

@@ -91,7 +91,7 @@ namespace client {
 
     private:
         static void wifi_event(void* arg, esp_event_base_t base, int32_t id, void*) {
-            auto* events = static_cast<EventGroupHandle_t>(arg);
+            auto events = static_cast<EventGroupHandle_t>(arg);
             constexpr int WIFI_FAIL_BIT = BIT1;
 
             if (base != WIFI_EVENT) return;
@@ -112,7 +112,7 @@ namespace client {
         }
 
         static void ip_event(void* arg, esp_event_base_t base, int32_t id, void* data) {
-            auto* events = static_cast<EventGroupHandle_t>(arg);
+            auto events = static_cast<EventGroupHandle_t>(arg);
             constexpr int WIFI_CONNECTED_BIT = BIT0;
 
             if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {

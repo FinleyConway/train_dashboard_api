@@ -1,16 +1,38 @@
+#include <iostream>
+
 #include "networking/tcp_server.hpp"
 #include "types/restart_esp.hpp"
 
-void on_esp_restart(common::restart_esp_t) {
+void on_esp_init(common::init_esp_t) {
 
 }
 
 int main() {
-    host::tcp_server_t server;
-    server.configure(ip::tcp::v4(), 8080);
-    server.register_receive_callback<common::restart_esp_t, &on_esp_restart>();
+    host::tcp_server_t server(ip::tcp::v4(), 8080);
+    server.register_receive_callback<common::init_esp_t, &on_esp_init>();
     server.start();
-    server.toggle_accepting(true);
+    if (server.toggle_accepting(true) != host::tcp_status_t::success) {
+        return -1;
+    }
 
-    while(1);
+    while(server.is_running()) {
+        std::string x;
+
+        std::cout << "Input:\n";
+        std::cin >> x;
+
+        auto status = server.send_to_client(0, common::init_esp_t(1));
+
+        if (status == host::tcp_status_t::success) {
+            std::cout <<"sent !!\n";
+        }
+
+        if (status == host::tcp_status_t::unknown_client) {
+            std::cout << "unknown client?\n";
+        }
+
+        if (status == host::tcp_status_t::no_client_connection) {
+            std::cout << "no client\n";
+        }
+    }
 }

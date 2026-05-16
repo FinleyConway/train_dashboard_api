@@ -24,7 +24,7 @@ namespace client {
             return m_socket;
         }
 
-        tcp_status_t connect_to(const char* mdns_address, const char* port) {
+        tcp_status_t connect_to(const char* host, const char* port) {
             struct addrinfo hints = {
                 .ai_family = AF_INET,
                 .ai_socktype = SOCK_STREAM
@@ -32,7 +32,7 @@ namespace client {
             struct addrinfo* res;
 
             // try to get the address from mdns name
-            if (getaddrinfo(mdns_address, port, &hints, &res) == 0) {
+            if (getaddrinfo(host, port, &hints, &res) == 0) {
                 int socket_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
                 if (socket_fd < 0) {
@@ -47,8 +47,12 @@ namespace client {
 
                 m_socket = socket_fd;
 
+                freeaddrinfo(res);
+
                 return tcp_status_t::success;
             }
+
+            freeaddrinfo(res);
 
             return tcp_status_t::unknown_mds_address;
         }
@@ -95,14 +99,14 @@ namespace client {
 
         tcp_status_t listen_to_server() {
             constexpr size_t esp_id_size = sizeof(common::esp_id_t);
-            common::registry_t::payload_t payload;
-            size_t bytes_read = 0;
+            common::payload_t payload;
+            size_t id_bytes_read = 0;
 
             // receive the id
             tcp_status_t status = recv_exact(
                 payload.data(), 
                 esp_id_size, 
-                bytes_read
+                id_bytes_read
             );
 
             if (status != tcp_status_t::success) return status;
@@ -112,25 +116,29 @@ namespace client {
             std::memcpy(&received_id, payload.data(), esp_id_size);
 
             // get the expected payload size
-            if (size_t expected_bytes = m_registry.get_packet_bytes(received_id); expected_bytes != 0) {
+            size_t expected_bytes = m_registry.get_packet_bytes(received_id);
+
+            if (expected_bytes != 0) {
                 size_t payload_bytes = 0;
 
                 // read the remaining payload
                 status = recv_exact(
-                    payload.data() + bytes_read, 
-                    expected_bytes - bytes_read,
+                    payload.data() + id_bytes_read, 
+                    expected_bytes,
                     payload_bytes
                 );
 
                 if (status != tcp_status_t::success) return status;
 
                 // notify of received data
-                if (!m_registry.dispatch(received_id, payload, bytes_read + payload_bytes)) {
+                if (!m_registry.dispatch(received_id, std::move(payload), id_bytes_read + payload_bytes)) {
                     return tcp_status_t::unknown_packet;
                 }
+
+                return tcp_status_t::success;
             }
 
-            return status;
+            return tcp_status_t::failure; 
         }
 
     private:
