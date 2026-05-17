@@ -7,21 +7,26 @@ import socket
 from zeroconf import ServiceInfo, Zeroconf
 
 class dns_broadcaster:
-    def __init__(self, ip, port):
-        self._info = ServiceInfo(
+    def __init__(self, name, port):
+        ip = self._get_ip()
+
+        self._service = ServiceInfo(
             "_mytcp._tcp.local.",
-            "esp_server._mytcp._tcp.local.",
+            f"{name}._mytcp._tcp.local.",
             addresses=[socket.inet_aton(ip)],
-            port=int(port)
+            port=int(port),
+            server=f"{name}.local."
         )
+
         self._zeroconf = Zeroconf()
 
         signal.signal(signal.SIGINT, self._shutdown)
         signal.signal(signal.SIGTERM, self._shutdown)
 
     def run(self):
-        # broadcast "esp_server.local" as server ip
-        self._zeroconf.register_service(self._info)
+        # broadcast "{name}.local" as server ip
+        self._zeroconf.unregister_all_services()
+        self._zeroconf.register_service(self._service)
         
         # make the program sleep
         while True:
@@ -29,16 +34,25 @@ class dns_broadcaster:
 
     def _shutdown(self, signum, frame):
         # clean up when signals were called
-        self._zeroconf.unregister_service(self._info)
+        self._zeroconf.unregister_service(self._service)
         self._zeroconf.close()
         sys.exit(0)
 
+    # bit of a hack
+    # https://stackoverflow.com/questions/166506/finding-local-ip-addresses-using-pythons-stdlib
+    def _get_ip(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+
 
 def main():
-    ip = sys.argv[1]
+    name = sys.argv[1]
     port = sys.argv[2]
 
-    dns = dns_broadcaster(ip, port)
+    dns = dns_broadcaster(name, port)
     dns.run()
 
 if __name__ == "__main__":

@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF) # hush clangd
 
+set(BINARY_FOLDER "esp_networking")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${BINARY_FOLDER}")
+
 add_subdirectory(vendors/spdlog)
 add_subdirectory(common)
 
@@ -25,3 +28,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     spdlog::spdlog_header_only
     esp_common
 )
+
+# copy scripts
+add_custom_target(copy_script ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/scripts ${CMAKE_BINARY_DIR}/${BINARY_FOLDER}/scripts
+)
+add_dependencies(${PROJECT_NAME} copy_script)

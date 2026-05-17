@@ -1,3 +1,5 @@
+#pragma once
+
 #include <mutex>
 #include <atomic>
 #include <thread>
@@ -9,13 +11,15 @@
 #include <asio.hpp>
 
 #include "registry.hpp"
+#include "service_config.hpp"
 #include "logging/logger.hpp"
-#include "networking/tcp_connection.hpp"
+#include "networking/mdns_service.hpp"
 #include "networking/tcp_callbacks.hpp"
-
-namespace ip = asio::ip;
+#include "networking/tcp_connection.hpp"
 
 namespace host {
+    namespace ip = asio::ip;
+
     enum class tcp_status_t {
         success,
         already_accepting,
@@ -26,9 +30,9 @@ namespace host {
 
     class tcp_server_t {
     public:
-        tcp_server_t(const ip::tcp& protocol, uint16_t port) : 
+        tcp_server_t(const ip::tcp& protocol, const char* port) : 
             m_acceptor(m_io_context),
-            m_endpoint(ip::tcp::endpoint(protocol, port)),
+            m_endpoint(ip::tcp::endpoint(protocol, std::atoi(port))),
             m_work_guard(asio::make_work_guard(m_io_context))
         {
         }
@@ -39,6 +43,11 @@ namespace host {
 
         void start() {
             m_io_thread = std::thread([this] {
+                m_mdns_service.start(
+                    common::service_config_t::name, 
+                    common::service_config_t::port
+                );
+
                 m_io_context.run();
             });
         }
@@ -56,6 +65,7 @@ namespace host {
             }
 
             m_work_guard.reset();
+            m_mdns_service.stop();
             m_io_context.stop();
 
             if (m_io_thread.joinable()) {
@@ -205,6 +215,7 @@ namespace host {
         asio::io_context m_io_context;
         ip::tcp::acceptor m_acceptor;
         ip::tcp::endpoint m_endpoint;
+        host::mdns_service_t m_mdns_service;
 
         std::thread m_io_thread;
         std::mutex m_connection_mutex;

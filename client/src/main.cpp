@@ -3,6 +3,7 @@
 
 #include "networking/wifi.hpp"
 #include "networking/tcp_client.hpp"
+#include "service_config.hpp"
 
 void init_gpio() {
     gpio_reset_pin(GPIO_NUM_27);
@@ -30,7 +31,8 @@ extern "C" void app_main() {
     }
 
     client::tcp_client_t c;
-    if (c.connect_to("192.168.1.191", "8080") == client::tcp_status_t::success) { 
+    
+    if (c.connect_to(common::service_config_t::hostname, common::service_config_t::port) == client::tcp_status_t::success) { 
         c.register_receieve_callback<common::init_esp_t, &on_esp_init>();
 
         ESP_LOGI("ESP_MAIN", "Connected");
