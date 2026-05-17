@@ -50,6 +50,9 @@ namespace host {
             toggle_accepting(false);
 
             // loop through each client and disconnect them
+            for (auto& [_, connection] : m_connections) {
+                connection->disconnect();
+            }
 
             m_work_guard.reset();
             m_io_context.stop();
