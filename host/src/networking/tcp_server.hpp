@@ -154,6 +154,10 @@ namespace host {
             if (m_on_disconnect_callback) {
                 m_on_disconnect_callback(id);
             }
+
+            if (auto it = m_connections.find(id); it != m_connections.end()) {
+                m_connections.erase(it);
+            }
         }
         
         void wait_for_connection() {
