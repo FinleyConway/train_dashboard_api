@@ -11,14 +11,8 @@ namespace host {
         static void init() {
             spdlog::set_pattern("%^[%T] %n: %v%$");
 
-            auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-            console_sink->set_level(spdlog::level::trace);
-
-            s_logger = std::make_shared<spdlog::logger>("Server", console_sink);
+            s_logger = spdlog::stderr_color_mt("Server");
             s_logger->set_level(spdlog::level::trace);
-            s_logger->flush_on(spdlog::level::trace);
-
-            spdlog::register_logger(s_logger);
         }
 
         static std::shared_ptr<spdlog::logger>& get_logger() {
