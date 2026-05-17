@@ -7,9 +7,21 @@ void on_esp_init(common::init_esp_t) {
 
 }
 
+void on_connect(common::esp_id_t id) {
+    std::cout << "ESP: " << id << " connected\n";
+}
+
+void on_disconnect(common::esp_id_t id) {
+    std::cout << "ESP: " << id << " disconnected\n";
+}
+
 int main() {
     host::tcp_server_t server(ip::tcp::v4(), 8080);
+
     server.register_receive_callback<common::init_esp_t, &on_esp_init>();
+    server.register_on_connect(on_connect);
+    server.register_on_disconnect(on_disconnect);
+
     server.start();
     if (server.toggle_accepting(true) != host::tcp_status_t::success) {
         return -1;

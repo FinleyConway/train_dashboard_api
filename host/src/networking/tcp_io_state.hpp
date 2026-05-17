@@ -7,6 +7,7 @@
 
 #include <asio.hpp>
 
+#include "tcp_callbacks.hpp"
 #include "registry.hpp"
 
 namespace host {
@@ -14,10 +15,14 @@ namespace host {
 
     class tcp_io_state_t {
     public:
-        using on_receive_fn = std::function<void(common::esp_id_t, common::payload_t&&, size_t)>;
-        using on_disconnect_fn = std::function<void(common::esp_id_t)>;
-        
-    public:
+        tcp_io_state_t(ip::tcp::socket& io_context) : m_socket(io_context) {}
+
+        void set_spec(common::esp_id_t id, common::registry_t& registry, on_disconnect_fn&& callback) {
+            m_id = id;
+            m_registry = &registry;
+            m_disconnect_callback = std::move(callback);
+        }
+
         bool send(common::payload_t&& payload, size_t bytes) {
             if (!m_socket.is_open()) return false;
 
@@ -92,7 +97,9 @@ namespace host {
             asio::async_read(
                 m_socket,
                 asio::buffer(&m_read_state.id, sizeof(common::esp_id_t)),
-                read_payload
+                [this](const std::error_code& ec, size_t bytes_transferred) {
+                    read_payload(ec, bytes_transferred);
+                }
             );
         }
 
@@ -113,7 +120,7 @@ namespace host {
                         // add assert for fn
 
                         // notify server
-                        m_receive_callback(
+                        m_registry->dispatch(
                             m_read_state.id,
                             std::move(m_read_state.payload), 
                             bytes_transferred
@@ -132,11 +139,9 @@ namespace host {
             if (ec) {
                 stop_io();
 
-                m_socket.close();
-
-                // add assert for fn
-
-                m_disconnect_callback(m_id);
+                if (m_disconnect_callback) {
+                    m_disconnect_callback(0); // id is pointless here, kind of a code smell?
+                }
 
                 return true;
             }
@@ -166,7 +171,6 @@ namespace host {
         io_state_t m_io_read_state = io_state_t::idle;
         io_state_t m_io_write_state = io_state_t::idle;
 
-        on_receive_fn m_receive_callback;
         on_disconnect_fn m_disconnect_callback;
     };
 }

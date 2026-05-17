@@ -9,6 +9,7 @@
 #include <asio.hpp>
 
 #include "tcp_connection.hpp"
+#include "tcp_callbacks.hpp"
 #include "registry.hpp"
 
 namespace ip = asio::ip;
@@ -47,6 +48,8 @@ namespace host {
 
         void shutdown() {
             toggle_accepting(false);
+
+            // loop through each client and disconnect them
 
             m_work_guard.reset();
             m_io_context.stop();
@@ -106,7 +109,7 @@ namespace host {
 
             // tell every client that the server doesn't/does want to receive 
             for (auto& [_, connection] : m_connections) {
-                connection->set_receiving(enable);
+                connection->set_receiving_state(enable);
             }
         }
 
@@ -118,7 +121,7 @@ namespace host {
                 return tcp_status_t::unknown_client;
             }
 
-            if (it->second->close()) {
+            if (it->second->disconnect()) {
                 m_connections.erase(it);
 
                 return tcp_status_t::success;
@@ -127,11 +130,32 @@ namespace host {
             return tcp_status_t::no_client_connection;
         }
 
-    private:
-        void handle_client_data(common::esp_id_t id, common::payload_t&& buffer, size_t bytes_received) {
-            m_registry.dispatch(id, std::move(buffer), bytes_received);
+        template<typename T, auto Fn>
+        void register_receive_callback() {
+            m_registry.register_callback<T, Fn>();
         }
 
+        void register_on_connect(on_connect_fn&& callback) {
+            m_on_connect_callback = std::move(callback);
+        }
+
+        void register_on_disconnect(on_connect_fn&& callback) {
+            m_on_disconnect_callback = std::move(callback);
+        }
+
+    private:
+        void on_connect(common::esp_id_t id) {
+            if (m_on_connect_callback) {
+                m_on_connect_callback(id);
+            }
+        }
+
+        void on_disconnect(common::esp_id_t id) {
+            if (m_on_disconnect_callback) {
+                m_on_disconnect_callback(id);
+            }
+        }
+        
         void wait_for_connection() {
             if (!m_acceptor.is_open()) return;
 
@@ -150,18 +174,18 @@ namespace host {
 
             if (ec) {
                 //std::cout << "Accepting incoming client failed: " << error.message() << "\n";
-                wait_for_connection();
+                wait_for_connection(); // TODO: Fix this
                 return; 
             }
 
             // setup new valid connection
-            new_connection->set_connection_id(m_connection_count);
-            new_connection->set_receive_callback([this](common::esp_id_t id, common::payload_t&& buffer, size_t bytes) {
-                handle_client_data(id, std::move(buffer), bytes);
+            new_connection->set_spec(m_connection_count, m_registry, [this](common::esp_id_t id) {
+                on_disconnect(id);
             });
-            new_connection->set_registry(&m_registry);
-
             m_connections.emplace(m_connection_count, new_connection);
+
+            // call callback
+            on_connect(m_connection_count);
 
             // move and check for other connections
             m_connection_count++;
@@ -174,11 +198,14 @@ namespace host {
         ip::tcp::endpoint m_endpoint;
 
         std::thread m_io_thread;
+        std::mutex m_connection_mutex;
         asio::executor_work_guard<asio::io_context::executor_type> m_work_guard;
 
         std::unordered_map<common::esp_id_t, tcp_connection_ptr_t> m_connections;
-        std::mutex m_connection_mutex;
         common::esp_id_t m_connection_count = 0;
+
+        on_connect_fn m_on_connect_callback;
+        on_disconnect_fn m_on_disconnect_callback;
 
         common::registry_t m_registry;
     };
