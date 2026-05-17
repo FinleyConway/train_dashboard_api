@@ -8,9 +8,10 @@
 
 #include <asio.hpp>
 
-#include "tcp_connection.hpp"
-#include "tcp_callbacks.hpp"
 #include "registry.hpp"
+#include "logging/logger.hpp"
+#include "networking/tcp_connection.hpp"
+#include "networking/tcp_callbacks.hpp"
 
 namespace ip = asio::ip;
 
@@ -180,7 +181,8 @@ namespace host {
             if (!m_acceptor.is_open()) return;
 
             if (ec) {
-                //std::cout << "Accepting incoming client failed: " << error.message() << "\n";
+                LOG_ERROR("Accepting incoming client failed: {}", ec.message());
+
                 wait_for_connection(); // TODO: Fix this
                 return; 
             }

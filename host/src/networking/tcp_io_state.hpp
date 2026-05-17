@@ -7,8 +7,10 @@
 
 #include <asio.hpp>
 
-#include "tcp_callbacks.hpp"
 #include "registry.hpp"
+#include "logging/logger.hpp"
+#include "logging/assert.hpp"
+#include "networking/tcp_callbacks.hpp"
 
 namespace host {
     namespace ip = asio::ip;
@@ -105,11 +107,11 @@ namespace host {
         void read_payload(const std::error_code& id_ec, size_t) {
             if (has_or_handle_io_error(id_ec)) return;
 
-            // add assert for reg
+            LOG_ASSERT(m_registry != nullptr, "m_registry is nullptr!");
 
             size_t size = m_registry->get_packet_bytes(m_read_state.id);
 
-            // add assert for size being 0
+            LOG_ASSERT(size != 0, "Packet size is not registered!");
 
             asio::async_read(
                 m_socket,
@@ -136,6 +138,8 @@ namespace host {
         bool has_or_handle_io_error(const std::error_code& ec) {
             // all errors seem to be suitable to just disconnect client
             if (ec) {
+                LOG_ERROR("Failed to read/write: {}", ec.message());
+
                 stop_io();
 
                 if (m_disconnect_callback) {
