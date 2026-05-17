@@ -17,8 +17,7 @@ namespace host {
     public:
         tcp_io_state_t(ip::tcp::socket& io_context) : m_socket(io_context) {}
 
-        void set_spec(common::esp_id_t id, common::registry_t& registry, on_disconnect_fn&& callback) {
-            m_id = id;
+        void set_spec(common::registry_t& registry, on_disconnect_fn&& callback) {
             m_registry = &registry;
             m_disconnect_callback = std::move(callback);
         }
@@ -162,7 +161,6 @@ namespace host {
 
     private:
         ip::tcp::socket& m_socket;
-        common::esp_id_t m_id = 0;
         common::registry_t* m_registry = nullptr;
 
         bool m_can_receive = false;

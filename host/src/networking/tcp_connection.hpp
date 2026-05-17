@@ -25,7 +25,7 @@ namespace host {
 
         void set_spec(common::esp_id_t id, common::registry_t& registry, on_disconnect_fn&& callback) {
             m_id = id;
-            m_io_state.set_spec(id, registry, [this](common::esp_id_t) {
+            m_io_state.set_spec(registry, [this](common::esp_id_t) {
                 disconnect();
             });
             m_disconnect_callback = std::move(callback);
