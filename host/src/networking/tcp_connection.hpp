@@ -47,12 +47,12 @@ namespace host {
         bool disconnect() {
             if (!m_socket.is_open()) return false;
 
+            m_io_state.stop_io();
+            m_socket.close();
+
             if (m_disconnect_callback) {
                 m_disconnect_callback(m_id);
             }
-
-            m_io_state.stop_io();
-            m_socket.close();
 
             return true;
         }
