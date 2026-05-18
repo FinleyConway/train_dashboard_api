@@ -43,8 +43,8 @@ pip install zeroconf
 
 ```bash
 # Cloning and building project
-git clone https://github.com/FinleyConway/EspNetworking.git --recursive
-cd EspNetworking
+git clone https://github.com/FinleyConway/esp_networking.git --recursive
+cd esp_networking
 cmake -S . -B build && cmake --build build
 
 # Run server
