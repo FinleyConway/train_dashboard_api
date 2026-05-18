@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF) # hush clangd
 
+include(CTest)
+enable_testing()
+
 # set build dir
 set(BINARY_FOLDER "esp_networking")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
@@ -13,6 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 
 # deps
 add_subdirectory(vendors/spdlog)
+add_subdirectory(vendors/Catch2)
 
 # internal
 add_subdirectory(common)
