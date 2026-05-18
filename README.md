@@ -1,4 +1,4 @@
-# EspNetworking
+# esp_networking
 A server-client system for communication between a PC server and multiple ESP32 clients simultaneously. It uses a compile-time TCP stream handler design, using [ASIO](https://github.com/chriskohlhoff/asio) for server networking and Unix socket communication and FreeRTOS for the ESP32s.
 
 ```c++
@@ -29,7 +29,6 @@ client.send_to_server<common::init_esp_t>(...);
 Uses VSCode PlatformIO IDE extension to build, flash and monitor esp32s.
 
 #### TODO: Be able to flash wifi informations and other important information
-#### TODO: Look into using the tools provided by ESP-IDF so PlatformIO isn't a requirement 
 ---
 ### Server:
 
