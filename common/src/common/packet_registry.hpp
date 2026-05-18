@@ -75,7 +75,7 @@ namespace common {
 
             // call the callback if one has been registered
             auto& callback = m_callback[packet_id];
-            const bool has_callback = callback.invoker != nullptr && callback.bytes != 0;
+            const bool has_callback = callback.invoker != nullptr;
             const bool do_bytes_match = callback.bytes == bytes_received - c_payload_is_size;
 
             if (has_callback) {
@@ -85,9 +85,11 @@ namespace common {
                     payload.data() + c_payload_is_size, // offset id bytes to just give payload
                     callback.bytes
                 ));
+
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         template<typename T, auto Fn>
