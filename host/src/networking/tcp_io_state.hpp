@@ -118,7 +118,7 @@ namespace host {
                 asio::buffer(m_read_state.payload.data(), size),
                 [this](const std::error_code& ec, size_t bytes_transferred) {
                     if (!has_or_handle_io_error(ec)) {
-                        // add assert for fn
+                        LOG_ASSERT(m_registry != nullptr, "m_registry is nullptr!");
 
                         // notify server
                         m_registry->dispatch(

@@ -30,9 +30,9 @@ namespace host {
 
     class tcp_server_t {
     public:
-        tcp_server_t(const ip::tcp& protocol) : 
+        tcp_server_t() : 
             m_acceptor(m_io_context),
-            m_endpoint(ip::tcp::endpoint(protocol, std::atoi(common::service_config_t::port))),
+            m_endpoint(ip::tcp::endpoint(ip::tcp::v4(), std::atoi(common::service_config_t::port))),
             m_work_guard(asio::make_work_guard(m_io_context))
         {
         }

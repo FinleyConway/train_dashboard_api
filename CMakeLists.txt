@@ -1,36 +1,27 @@
 cmake_minimum_required(VERSION 3.22...3.30)
-project(host LANGUAGES CXX)
+project(esp_networking LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF) # hush clangd
 
+# set build dir
 set(BINARY_FOLDER "esp_networking")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${BINARY_FOLDER}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
+    "${CMAKE_BINARY_DIR}/${BINARY_FOLDER}"
+)
 
+# deps
 add_subdirectory(vendors/spdlog)
+
+# internal
 add_subdirectory(common)
-
-add_executable(${PROJECT_NAME}
-    host/src/main.cpp
-)
-
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/vendors/asio-1.36.0/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/host/src
-)
-
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    ASIO_STANDALONE
-)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    spdlog::spdlog_header_only
-    esp_common
-)
+add_subdirectory(host)
+add_subdirectory(tests)
 
 # copy scripts
-add_custom_target(copy_script ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/scripts ${CMAKE_BINARY_DIR}/${BINARY_FOLDER}/scripts
+add_custom_target(copy_scripts ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/scripts
+        ${CMAKE_BINARY_DIR}/${BINARY_FOLDER}/scripts
 )
-add_dependencies(${PROJECT_NAME} copy_script)

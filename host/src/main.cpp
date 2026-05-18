@@ -18,7 +18,7 @@ void on_disconnect(common::esp_id_t id) {
 
 int main() {
     host::logger_t::init();
-    host::tcp_server_t server(ip::tcp::v4());
+    host::tcp_server_t server;
 
     server.register_receive_callback<common::init_esp_t, &on_esp_init>();
     server.register_on_connect(on_connect);
