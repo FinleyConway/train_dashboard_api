@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdint>
 #include <csignal>
+#include <cstdlib>
+#include <cerrno>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -25,18 +27,23 @@ namespace host {
 
             m_pid = fork();
 
-            if (m_pid < 0) return; // should probably add status returns for context
+            if (m_pid < 0) {
+                m_pid = -1;
+
+                return; // should probably add status returns for context
+            }
 
             if (m_pid == 0) {
-                char* args[] = {
-                    (char*)"python3",
-                    (char*)"scripts/dns_broadcaster.py",
-                    (char*)name,
-                    (char*)port,
+                // make the child process run the mdns broadcaster
+                execlp("python3",
+                    "python3",
+                    "scripts/dns_broadcaster.py",
+                    name,
+                    port,
                     nullptr
-                };
+                );
 
-                execvp("python3", args);
+                // exit the child process if an error happens
                 _exit(EXIT_FAILURE);
             }
         }
@@ -44,13 +51,16 @@ namespace host {
         void stop() {
             if (m_pid <= 0) return;
 
-            kill(m_pid, SIGTERM);
+            // check if child already exited
+            pid_t result = waitpid(m_pid, nullptr, WNOHANG);
 
-            int status = 0;
+            if (result == 0) {
+                // stop dns service
+                kill(m_pid, SIGTERM);
 
-            if (waitpid(m_pid, nullptr, WNOHANG) == m_pid) {
-                m_pid = -1;
-                return;
+                while (waitpid(m_pid, nullptr, 0) == -1) {
+                    if (errno != EINTR) break;
+                }
             }
 
             m_pid = -1;
