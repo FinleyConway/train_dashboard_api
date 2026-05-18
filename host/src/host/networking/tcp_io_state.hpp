@@ -7,10 +7,11 @@
 
 #include <asio.hpp>
 
-#include "registry.hpp"
-#include "logging/logger.hpp"
-#include "logging/assert.hpp"
-#include "networking/tcp_callbacks.hpp"
+#include "host/logging/logger.hpp"
+#include "host/logging/assert.hpp"
+#include "host/networking/tcp_callbacks.hpp"
+
+#include "common/registry.hpp"
 
 namespace host {
     namespace ip = asio::ip;

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(host LANGUAGES CXX)
 
 add_executable(host
-    src/main.cpp
+    src/host/main.cpp
 )
 
 target_include_directories(host PRIVATE

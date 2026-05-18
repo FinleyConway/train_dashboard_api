@@ -4,9 +4,10 @@
 
 #include <asio.hpp>
 
-#include "tcp_callbacks.hpp"
-#include "tcp_io_state.hpp"
-#include "registry.hpp"
+#include "host/networking/tcp_callbacks.hpp"
+#include "host/networking/tcp_io_state.hpp"
+
+#include "common/registry.hpp"
 
 namespace ip = asio::ip;
 

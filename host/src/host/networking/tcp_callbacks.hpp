@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "registry.hpp"
+#include "common/registry.hpp"
 
 namespace host {
     using on_connect_fn = std::function<void(common::esp_id_t)>;

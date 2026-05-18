@@ -1,8 +1,9 @@
 #include <iostream>
 
-#include "networking/tcp_server.hpp"
-#include "logging/logger.hpp"
-#include "types/restart_esp.hpp"
+#include "host/networking/tcp_server.hpp"
+#include "host/logging/logger.hpp"
+
+#include "common/types/init_esp.hpp"
 
 void on_esp_init(common::init_esp_t init_esp) {
     LOG_INFO("Received from esp: {}", init_esp.id);
