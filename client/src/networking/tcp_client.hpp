@@ -2,7 +2,8 @@
 
 #include <sys/socket.h>
 
-#include "registry.hpp"
+#include "common/core/net_types.hpp"
+#include "common/contract/registry.hpp"
 
 namespace client {
     enum class tcp_status_t {

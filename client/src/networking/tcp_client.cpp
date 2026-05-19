@@ -2,7 +2,7 @@
 
 #include <lwip/netdb.h>
 
-#include "service_config.hpp"
+#include "common/contract/service_config.hpp"
 
 namespace client {
     int tcp_client_t::get_socket() const {

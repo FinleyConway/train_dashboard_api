@@ -15,8 +15,9 @@
 #include "host/networking/tcp_callbacks.hpp"
 #include "host/networking/tcp_connection.hpp"
 
-#include "common/registry.hpp"
-#include "common/service_config.hpp"
+#include "common/core/net_types.hpp"
+#include "common/contract/registry.hpp"
+#include "common/contract/service_config.hpp"
 
 namespace host {
     namespace ip = asio::ip;

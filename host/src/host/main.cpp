@@ -3,7 +3,7 @@
 #include "host/networking/tcp_server.hpp"
 #include "host/logging/logger.hpp"
 
-#include "common/types/init_esp.hpp"
+#include "common/messages/init_esp.hpp"
 
 void on_esp_init(common::init_esp_t init_esp) {
     LOG_INFO("Received from esp: {}", init_esp.id);

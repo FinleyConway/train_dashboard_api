@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "common/packet_registry.hpp"
+#include "common/core/packet_registry.hpp"
 
 struct test_one_t {
     uint16_t id = 0;
