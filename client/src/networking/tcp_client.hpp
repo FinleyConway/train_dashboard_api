@@ -32,7 +32,7 @@ namespace client {
         }
 
         template<typename T>
-        tcp_status_t send_to_server(common::esp_id_t client_id, const T& data) {
+        tcp_status_t send_to_server(const T& data) {
             const size_t payload_size = m_registry.get_packet_bytes<T>();
             common::payload_t payload = m_registry.create_payload<T>(data);
             size_t total_bytes_send = 0;

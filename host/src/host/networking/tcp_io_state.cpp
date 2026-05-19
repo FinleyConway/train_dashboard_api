@@ -73,7 +73,7 @@ namespace host {
 
         asio::async_read(
             m_socket,
-            asio::buffer(&m_read_state.id, sizeof(common::esp_id_t)),
+            asio::buffer(&m_read_state.id, sizeof(common::packet_id_t)),
             [this](const std::error_code& ec, size_t bytes_transferred) {
                 read_payload(ec, bytes_transferred);
             }

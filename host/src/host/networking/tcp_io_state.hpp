@@ -54,7 +54,7 @@ namespace host {
         };
 
         struct read_state_t {
-            common::esp_id_t id = 0;
+            common::packet_id_t id = 0;
             common::payload_t payload;
         };
 
