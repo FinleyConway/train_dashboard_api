@@ -1,48 +1,50 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "common/core/packet_registry.hpp"
+#include "common/core/serialise.hpp"
+#include "common/api/types.hpp"
 
 struct test_one_t {
     uint16_t id = 0;
 
-    #pragma pack(push, 1)
-    struct net_t {
-        uint16_t id;
-    };
-    #pragma pack(pop)
-
-    static net_t to_net(test_one_t data) {
-        return {
-            .id = data.id
-        };
+    static void serialise(std::span<uint8_t>& payload, const test_one_t& data) {
+        common::serialise_t::write(payload, data.id);
     }
 
-    static test_one_t from_net(net_t net) {
-        return {
-            .id = net.id
-        };
+    static test_one_t deserialise(std::span<uint8_t> payload) {
+        test_one_t result;
+
+        result.id = common::serialise_t::read<uint16_t>(payload); 
+
+        return result;
+    }
+
+    static constexpr size_t payload_size() {
+        return sizeof(
+            uint16_t
+        );
     }
 };
 
 struct test_two_t {
     uint16_t id = 0;
 
-    #pragma pack(push, 1)
-    struct net_t {
-        uint16_t id;
-    };
-    #pragma pack(pop)
-
-    static net_t to_net(test_two_t data) {
-        return {
-            .id = data.id
-        };
+    static void serialise(std::span<uint8_t>& payload, const test_two_t& data) {
+        common::serialise_t::write(payload, data.id);
     }
 
-    static test_two_t from_net(net_t net) {
-        return {
-            .id = net.id
-        };
+    static test_two_t deserialise(std::span<uint8_t> payload) {
+        test_two_t result;
+
+        result.id = common::serialise_t::read<uint16_t>(payload); 
+
+        return result;
+    }
+
+    static constexpr size_t payload_size() {
+        return sizeof(
+            uint16_t
+        );
     }
 };
 
@@ -62,16 +64,16 @@ TEST_CASE( "packet_registry class", "[packet_registry]" ) {
     reg_t registry;
 
     SECTION("Get packet size") {
-        size_t bytes_1 = registry.get_packet_bytes(0);
-        size_t bytes_2 = registry.get_packet_bytes<test_one_t>();
+        size_t bytes_1 = registry.packet_size(0);
+        size_t bytes_2 = registry.packet_size<test_one_t>();
 
         REQUIRE(bytes_1 == 0);
         REQUIRE(bytes_2 == 0);
 
         registry.register_callback<test_one_t, &test_one_callback>();
 
-        size_t reg_bytes_1 = registry.get_packet_bytes(0);
-        size_t reg_bytes_2 = registry.get_packet_bytes<test_one_t>();
+        size_t reg_bytes_1 = registry.packet_size(0);
+        size_t reg_bytes_2 = registry.packet_size<test_one_t>();
 
         REQUIRE(reg_bytes_1 == 2);
         REQUIRE(reg_bytes_2 == 2);
@@ -80,30 +82,28 @@ TEST_CASE( "packet_registry class", "[packet_registry]" ) {
     SECTION("Create payload") {
         test_one_t input{ .id = 10 };
 
-        payload_t payload = registry.create_payload(input);
+        payload_t payload = registry.create(input);
 
         reg_id_t extracted_id = 0;
         std::memcpy(&extracted_id, payload.data(), sizeof(reg_id_t));
 
         REQUIRE(extracted_id == 0);
 
-        test_one_t::net_t extracted_data;
-        std::memcpy(
-            &extracted_data,
-            payload.data() + sizeof(reg_id_t),
-            sizeof(extracted_data)
+        std::span<uint8_t> payload_view(
+            payload.data() + sizeof(reg_id_t), 
+            payload.size() - sizeof(reg_id_t)
         );
 
-        test_one_t::net_t expected = test_one_t::to_net(input);
+        test_one_t expected = test_one_t::deserialise(payload_view);
 
-        REQUIRE(extracted_data.id == expected.id);
+        REQUIRE(input.id == expected.id);
     }
 
     SECTION("Dispatch regisered payload") {
         registry.register_callback<test_one_t, &test_one_callback>();
         
         test_one_t input{ .id = 10 };
-        payload_t payload = registry.create_payload(input);
+        payload_t payload = registry.create(input);
 
         bool result = registry.dispatch(
             0,
@@ -126,7 +126,7 @@ TEST_CASE( "packet_registry class", "[packet_registry]" ) {
 
     SECTION("Dispatch unregisered payload") {
         test_one_t input{ .id = 10 };
-        payload_t payload = registry.create_payload(input);
+        payload_t payload = registry.create(input);
 
         bool result = registry.dispatch(
             0,
@@ -141,7 +141,7 @@ TEST_CASE( "packet_registry class", "[packet_registry]" ) {
         registry.register_callback<test_one_t, &test_one_callback>();
 
         test_one_t input{ .id = 10 };
-        payload_t payload = registry.create_payload(input);
+        payload_t payload = registry.create(input);
 
         bool result = registry.dispatch(
             0,

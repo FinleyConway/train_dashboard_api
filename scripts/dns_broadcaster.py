@@ -7,15 +7,15 @@ import socket
 from zeroconf import ServiceInfo, Zeroconf
 
 class dns_broadcaster:
-    def __init__(self, name, port):
+    def __init__(self, hostname, port):
         ip = self._get_ip()
 
         self._service = ServiceInfo(
             "_mytcp._tcp.local.",
-            f"{name}._mytcp._tcp.local.",
+            f"{hostname.replace(".local", "")}._mytcp._tcp.local.",
             addresses=[socket.inet_aton(ip)],
             port=int(port),
-            server=f"{name}.local."
+            server=f"{hostname}."
         )
 
         self._zeroconf = Zeroconf()
@@ -49,10 +49,10 @@ class dns_broadcaster:
 
 
 def main():
-    name = sys.argv[1]
+    hostname = sys.argv[1]
     port = sys.argv[2]
 
-    dns = dns_broadcaster(name, port)
+    dns = dns_broadcaster(hostname, port)
     dns.run()
 
 if __name__ == "__main__":

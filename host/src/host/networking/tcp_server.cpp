@@ -15,7 +15,7 @@ namespace host {
     void tcp_server_t::start() {
         m_io_thread = std::thread([this] {
             m_mdns_service.start(
-                common::service_config_t::name, 
+                common::service_config_t::hostname, 
                 common::service_config_t::port
             );
 

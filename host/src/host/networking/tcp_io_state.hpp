@@ -11,8 +11,8 @@
 #include "host/logging/assert.hpp"
 #include "host/networking/tcp_callbacks.hpp"
 
-#include "common/contract/registry.hpp"
-#include "common/core/net_types.hpp"
+#include "common/api/registry.hpp"
+#include "common/api/types.hpp"
 
 namespace host {
     namespace ip = asio::ip;

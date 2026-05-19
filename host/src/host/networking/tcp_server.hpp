@@ -15,9 +15,9 @@
 #include "host/networking/tcp_callbacks.hpp"
 #include "host/networking/tcp_connection.hpp"
 
-#include "common/core/net_types.hpp"
-#include "common/contract/registry.hpp"
-#include "common/contract/service_config.hpp"
+#include "common/api/types.hpp"
+#include "common/api/registry.hpp"
+#include "common/api/service_config.hpp"
 
 namespace host {
     namespace ip = asio::ip;
@@ -53,8 +53,8 @@ namespace host {
             }
 
             const bool success = it->second->send(
-                m_registry.create_payload(data),
-                m_registry.get_packet_bytes<T>() + sizeof(common::esp_id_t)
+                m_registry.create(data),
+                m_registry.packet_size<T>() + sizeof(common::esp_id_t)
             );
 
             if (!success) return tcp_status_t::no_client_connection;

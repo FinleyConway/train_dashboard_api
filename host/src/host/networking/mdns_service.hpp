@@ -22,7 +22,7 @@ namespace host {
         mdns_service_t(const mdns_service_t&) = delete;
         mdns_service_t& operator=(const mdns_service_t&) = delete;
 
-        void start(const char* name, const char* port) {
+        void start(const char* hostname, const char* port) {
             if (m_pid > 0) return;
 
             m_pid = fork();
@@ -38,7 +38,7 @@ namespace host {
                 execlp("python3",
                     "python3",
                     "scripts/dns_broadcaster.py",
-                    name,
+                    hostname,
                     port,
                     nullptr
                 );

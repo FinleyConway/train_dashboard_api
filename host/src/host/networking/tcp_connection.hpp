@@ -7,8 +7,8 @@
 #include "host/networking/tcp_callbacks.hpp"
 #include "host/networking/tcp_io_state.hpp"
 
-#include "common/contract/registry.hpp"
-#include "common/core/net_types.hpp"
+#include "common/api/registry.hpp"
+#include "common/api/types.hpp"
 
 namespace ip = asio::ip;
 

@@ -2,121 +2,34 @@
 
 #include <span>
 #include <array>
-#include <cstdint>
-#include <cstring>
 #include <utility>
-#include <algorithm> 
+#include <cstdint>
+#include <algorithm>
+#include <type_traits>
 
 namespace common {
     template<typename T>
     concept packet_type =
-    requires(T obj, typename T::net_t net) {
-        typename T::net_t;
+    requires(std::span<uint8_t>& payload, const T& obj) {
+        { T::serialise(payload, obj) } -> std::same_as<void>;
+        { T::deserialise(payload) } -> std::same_as<T>;
+        { T::payload_size() } -> std::same_as<size_t>;
+    };
 
-        { T::to_net(obj) } -> std::same_as<typename T::net_t>;
-        { T::from_net(net) } -> std::same_as<T>;
-    }   
-    && std::is_trivially_copyable_v<typename T::net_t>
-    && std::is_standard_layout_v<typename T::net_t>;
-
-
-    template<packet_type... Ts>
+    template<typename... Ts>
     class packet_registry_impl_t {
     private:
-        static consteval size_t get_max_bytes() {
-            size_t max = 0;
-            ((max = std::max(max, sizeof(typename Ts::net_t))), ...);
-            return max;
+        static consteval size_t max_payload() {
+            std::size_t max = 0;
+            ((max = std::max(max, Ts::payload_size())), ...);
+            return max + sizeof(packet_id_t);
         }
 
-        static constexpr size_t c_payload_is_size = sizeof(uint16_t);
-        static constexpr size_t c_max_payload = get_max_bytes() + c_payload_is_size;
-
-    public:
-        using packet_id_t = uint16_t;
-        using payload_t = std::array<uint8_t, c_max_payload>;
-        using payload_view_t = std::span<uint8_t>;
-
-    public:
         template<typename T>
-        payload_t create_payload(const T& data) {
-            static_assert(has_type<T>(), "T must be in Ts...");
-
-            // set up buffer and data 
-            payload_t payload;
-            const typename T::net_t net_data = T::to_net(data);
-            constexpr packet_id_t packet_id = get_type_id<T>();
-
-            // copy data into the payload
-            std::memcpy(payload.data(), &packet_id, c_payload_is_size); 
-            std::memcpy(payload.data() + c_payload_is_size, &net_data, sizeof(net_data)); 
-
-            return payload;
+        static consteval bool contains() {
+            return (std::is_same_v<T, Ts> || ...);
         }
 
-        size_t get_packet_bytes(packet_id_t packed_id) const {
-            if (packed_id >= m_callback.size()) {
-                return 0;
-            }
-
-            return m_callback.at(packed_id).bytes;
-        }
-        
-        template<typename T>
-        size_t get_packet_bytes() const {
-            static_assert(has_type<T>(), "T must be in Ts...");
-
-            return m_callback.at(get_type_id<T>()).bytes;
-        }
-
-        bool dispatch(packet_id_t packet_id, payload_t&& payload, size_t bytes_received) {
-            // prevent invalid packet ids
-            if (packet_id >= m_callback.size()) return false;
-
-            // call the callback if one has been registered
-            auto& callback = m_callback[packet_id];
-            const bool has_callback = callback.invoker != nullptr;
-            const bool do_bytes_match = callback.bytes == bytes_received - c_payload_is_size;
-
-            if (has_callback) {
-                if (!do_bytes_match) return false;
-
-                callback.invoker(payload_view_t(
-                    payload.data() + c_payload_is_size, // offset id bytes to just give payload
-                    callback.bytes
-                ));
-
-                return true;
-            }
-
-            return false;
-        }
-
-        template<typename T, auto Fn>
-        void register_callback() {
-            static_assert(has_type<T>(), "T must be in Ts...");
-
-            auto& callback = m_callback[get_type_id<T>()];
-            
-            callback.bytes = sizeof(typename T::net_t);
-            callback.invoker = [](payload_view_t bytes) {
-                typename T::net_t net_data{};
-                std::memcpy(&net_data, bytes.data(), sizeof(net_data));
-
-                T obj = T::from_net(net_data);
-                Fn(obj);
-            };
-        }
-
-    private:
-        using callback_fn = void(*)(payload_view_t);
-
-        struct callback_info_t {
-            callback_fn invoker = nullptr; 
-            size_t bytes = 0;
-        };
-
-    private:
         template<typename T, typename First, typename... Rest>
         static consteval size_t type_index_impl(size_t idx = 0) {
             if constexpr (std::is_same_v<T, First>)
@@ -128,13 +41,76 @@ namespace common {
         }
 
         template<typename T>
-        static consteval size_t get_type_id() {
+        static consteval size_t get_type_of() {
             return type_index_impl<T, Ts...>();
         }
 
+    public:
+        using packet_id_t = uint16_t;
+        using payload_t = std::array<uint8_t, max_payload()>;
+
+        struct callback_info_t {
+            void (*invoke)(std::span<uint8_t>) = nullptr;
+            size_t size = 0;
+        };
+
+    public:
         template<typename T>
-        static consteval bool has_type() {
-            return (std::is_same_v<T, Ts> || ...);
+        payload_t create(const T& data) const {
+            static_assert(contains<T>(), "T must be in Ts...");
+
+            // set up payload
+            payload_t payload{};
+            std::span<uint8_t> view(payload.data(), payload.size());
+
+            // write packet id to front
+            constexpr packet_id_t id = get_type_of<T>();
+            std::memcpy(view.data(), &id, sizeof(id)); 
+
+            // write packet to payload 
+            auto payload_view = view.subspan(sizeof(id));
+            T::serialise(payload_view, data);
+
+            return payload;
+        }
+
+        bool dispatch(packet_id_t id, payload_t&& payload, size_t bytes) const {
+            if (id >= m_callback.size()) return false;
+
+            const auto& callback = m_callback[id];
+
+            if (callback.invoke == nullptr) return false; // nothing to call
+            if (bytes - sizeof(packet_id_t) != callback.size) return false; // byte mismatch
+
+            callback.invoke(std::span<uint8_t> {
+                payload.data() + sizeof(packet_id_t),
+                callback.size
+            });
+
+            return true;
+        }
+
+        template<typename T, auto Fn>
+        void register_callback() {
+            static_assert(contains<T>(), "T must be registered in common!");
+
+            auto& callback = m_callback[get_type_of<T>()];
+            
+            callback.size = T::payload_size();
+            callback.invoke = [](std::span<uint8_t> payload) {
+                T obj = T::deserialise(payload);
+                Fn(obj);
+            };
+        }
+
+        size_t packet_size(packet_id_t id) const {
+            if (id >= m_callback.size()) return 0;
+            return m_callback[id].size;
+        }
+        
+        template<typename T>
+        size_t packet_size() const {
+            return m_callback.at(get_type_of<T>()).size;
         }
 
     private:

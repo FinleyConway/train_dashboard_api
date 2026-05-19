@@ -85,7 +85,7 @@ namespace host {
 
         LOG_ASSERT(m_registry != nullptr, "m_registry is nullptr!");
 
-        size_t size = m_registry->get_packet_bytes(m_read_state.id);
+        size_t size = m_registry->packet_size(m_read_state.id);
 
         LOG_ASSERT(size != 0, "Packet size is not registered!");
 

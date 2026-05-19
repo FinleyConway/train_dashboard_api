@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "common/core/net_types.hpp"
+#include "common/api/types.hpp"
 
 namespace host {
     using on_connect_fn = std::function<void(common::esp_id_t)>;
