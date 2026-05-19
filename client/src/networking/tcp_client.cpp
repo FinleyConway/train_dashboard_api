@@ -2,7 +2,7 @@
 
 #include <lwip/netdb.h>
 
-#include "common/contract/service_config.hpp"
+#include "common/api/service_config.hpp"
 
 namespace client {
     int tcp_client_t::get_socket() const {
@@ -63,11 +63,11 @@ namespace client {
         tcp_status_t status;
         common::payload_t payload;
 
-        const common::esp_id_t received_id = recv_payload_id(payload, status);
+        const common::packet_id_t received_id = recv_payload_id(payload, status);
 
         if (status != tcp_status_t::success) return status;
 
-        const size_t expected_payload_bytes = m_registry.get_packet_bytes(received_id);
+        const size_t expected_payload_bytes = m_registry.packet_size(received_id);
         const bool has_payload = expected_payload_bytes != 0;
 
         if (!has_payload) return tcp_status_t::unknown_packet;
@@ -105,15 +105,15 @@ namespace client {
         return tcp_status_t::success;
     }
 
-    common::esp_id_t tcp_client_t::recv_payload_id(common::payload_t& payload, tcp_status_t& status) const {
-        constexpr size_t esp_id_size = sizeof(common::esp_id_t);
+    common::packet_id_t tcp_client_t::recv_payload_id(common::payload_t& payload, tcp_status_t& status) const {
+        constexpr size_t packet_id_size = sizeof(common::packet_id_t);
         size_t id_bytes_read = 0;
 
-        status = recv_exact(payload.data(), esp_id_size, id_bytes_read);
+        status = recv_exact(payload.data(), packet_id_size, id_bytes_read);
 
         // get the payload size from the received id
-        common::esp_id_t received_id = 0;
-        std::memcpy(&received_id, payload.data(), esp_id_size);
+        common::packet_id_t received_id = 0;
+        std::memcpy(&received_id, payload.data(), packet_id_size);
 
         return received_id;
     }
@@ -122,7 +122,7 @@ namespace client {
         size_t payload_bytes = 0;
 
         status = recv_exact(
-            payload.data() + sizeof(common::esp_id_t), 
+            payload.data() + sizeof(common::packet_id_t), 
             expected_payload_bytes,
             payload_bytes
         );

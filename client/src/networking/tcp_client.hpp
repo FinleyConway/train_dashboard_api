@@ -2,8 +2,8 @@
 
 #include <sys/socket.h>
 
-#include "common/core/net_types.hpp"
-#include "common/contract/registry.hpp"
+#include "common/api/types.hpp"
+#include "common/api/registry.hpp"
 
 namespace client {
     enum class tcp_status_t {
@@ -33,8 +33,8 @@ namespace client {
 
         template<typename T>
         tcp_status_t send_to_server(const T& data) {
-            const size_t payload_size = m_registry.get_packet_bytes<T>();
-            common::payload_t payload = m_registry.create_payload<T>(data);
+            const size_t payload_size = m_registry.packet_size<T>();
+            common::payload_t payload = m_registry.create<T>(data);
             size_t total_bytes_send = 0;
 
             while (total_bytes_send < payload_size) {
@@ -59,7 +59,7 @@ namespace client {
     private:
         tcp_status_t recv_exact(uint8_t* dst, size_t bytes_to_read, size_t& bytes_read) const;
 
-        common::esp_id_t recv_payload_id(common::payload_t& payload, tcp_status_t& status) const;
+        common::packet_id_t recv_payload_id(common::payload_t& payload, tcp_status_t& status) const;
 
         size_t recv_payload(size_t expected_payload_bytes, common::payload_t& payload, tcp_status_t& status);
 

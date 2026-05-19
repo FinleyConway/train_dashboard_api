@@ -3,7 +3,6 @@
 
 #include "networking/wifi.hpp"
 #include "networking/tcp_client.hpp"
-#include "service_config.hpp"
 
 void init_gpio() {
     gpio_reset_pin(GPIO_NUM_27);
