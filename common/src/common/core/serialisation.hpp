@@ -1,62 +1,88 @@
-#pragma once
+    #pragma once
 
-#include <type_traits>
-#include <cstdint>
-#include <cstring>
-#include <bit>
+    #include <type_traits>
+    #include <cstdint>
+    #include <cstring>
+    #include <array>
+    #include <bit>
 
-#include "common/core/net_types.hpp"
+    #include "common/core/net_types.hpp"
 
-namespace common {
-    template <typename T>
-    struct is_fixed_width_int : std::bool_constant<
-        std::is_same_v<T, int8_t>  ||
-        std::is_same_v<T, uint8_t> ||
-        std::is_same_v<T, int16_t> ||
-        std::is_same_v<T, uint16_t>||
-        std::is_same_v<T, int32_t> ||
-        std::is_same_v<T, uint32_t>||
-        std::is_same_v<T, int64_t> ||
-        std::is_same_v<T, uint64_t>
-    > {};
+    namespace common {
+        template<typename T>
+        concept primitive_type = std::is_trivially_copyable_v<T> && !std::is_pointer_v<T>;
 
-    template<typename TInt>
-    void write_int(common::payload_view_t& payload, TInt int_type) {
-        static_assert(is_fixed_width_int<TInt>::value, "write_int T must be a fixed width integer type!");
+        template<typename T>
+        T swap_bytes(T value) {
+            constexpr size_t size = sizeof(T);
+            constexpr bool needs_swap = std::endian::native == std::endian::big;    
 
-        constexpr size_t size = sizeof(TInt);
-        constexpr bool is_big_endian = std::endian::native == std::endian::big;
+            // return regular value if same endian or is a byte
+            if constexpr (!needs_swap || size == 1) {
+                return value;
+            }
+            else if constexpr (std::is_integral_v<T>) {
+                return std::byteswap(value);
+            }
+            else if constexpr (std::is_floating_point_v<T>) {
+                // temp convert decimal to a int
+                using temp_int_t = std::conditional_t<sizeof(T) == 4, uint32_t, uint64_t>;
 
-        // if the systems is big then swap to turn small
-        // since esp is little
-        if constexpr (is_big_endian && size > 1) {
-            int_type = std::byteswap(int_type);
+                // convert the decimal
+                temp_int_t temp{};
+                std::memcpy(&temp, &value, sizeof(T));
+
+                // swap and convert bytes back to decimal
+                temp = std::byteswap(temp);
+                std::memcpy(&value, &temp, sizeof(T));
+
+                return value;
+           }
+
+           return value;
         }
 
-        std::memcpy(payload.data(), &int_type, size);
+        template<primitive_type T>
+        void write(common::payload_view_t& payload, T primitive) {
+            assert(payload.size() >= sizeof(T));
 
-        payload = payload.subspan(size); // offset payload
-    }
+            primitive = swap_bytes(primitive);
 
-    template<typename TInt>
-    TInt read_int(common::payload_view_t& payload) {
-        static_assert(is_fixed_width_int<TInt>::value, "write_int T must be a fixed width integer type!");
+            std::memcpy(payload.data(), &primitive, sizeof(T));
 
-        constexpr size_t size = sizeof(TInt);
-        constexpr bool is_big_endian = std::endian::native == std::endian::big;
-
-        TInt int_type = 0;
-
-        std::memcpy(&int_type, payload.data(), size);
-
-        // if the systems is big then swap to turn small
-        // since esp is little
-        if constexpr (is_big_endian && size > 1) {
-            int_type = std::byteswap(int_type);
+            payload = payload.subspan(sizeof(T)); // offset payload
         }
 
-        payload = payload.subspan(size); // offset payload
+        template<primitive_type T>
+        T read(common::payload_view_t& payload) {
+            assert(payload.size() >= sizeof(T));
 
-        return int_type;
+            T primitive{};
+
+            std::memcpy(&primitive, payload.data(), sizeof(T));
+
+            primitive = swap_bytes(primitive);
+
+            payload = payload.subspan(sizeof(T)); // offset payload
+
+            return primitive;
+        }
+
+        template<typename T, size_t N>
+        void write(payload_view_t& payload, const std::array<T, N>& arr) {
+            for (auto v : arr) {
+                write(payload, v);
+            }
+        }
+
+        template<typename T, size_t N>
+        std::array<T, N> read(common::payload_view_t& payload) {
+            std::array<T, N> arr;
+
+            for (auto& v : arr) {
+                v = read<T>(payload);
+            }
+
+            return arr;
+        }
     }
-}

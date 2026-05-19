@@ -7,8 +7,8 @@
 struct test_t {
     int64_t id = 0;
     uint32_t sweets = 0;
-    int16_t lollies = 0;
-    uint8_t pop = 0;
+    float lollies = 0.0f;
+    double pop = 0.0;
 
     bool operator==(const test_t& other) const {
         return (
@@ -27,7 +27,7 @@ TEST_CASE( "Integer serialisation", "[serialisation]" ) {
         std::span<uint8_t> payload_sp(payload);
         uint16_t value = 10;
 
-        common::write_int(payload_sp, value);
+        common::write(payload_sp, value);
 
         uint16_t test_value = 0;
         std::memcpy(&test_value, payload.data(), sizeof(uint16_t));
@@ -45,7 +45,7 @@ TEST_CASE( "Integer serialisation", "[serialisation]" ) {
         payload[1] = 0x00;
 
         std::span<uint8_t> payload_sp(payload);
-        uint16_t value = common::read_int<uint16_t>(payload_sp);
+        uint16_t value = common::read<uint16_t>(payload_sp);
 
         REQUIRE(value == 10);
     }
@@ -54,24 +54,25 @@ TEST_CASE( "Integer serialisation", "[serialisation]" ) {
         test_t write_t = {
             .id = 100,
             .sweets = 99,
-            .lollies = 50,
-            .pop =2
+            .lollies = 50.0f,
+            .pop = 2.0
         };
 
-        std::array<uint8_t, 15> payload;
-        std::span<uint8_t> payload_sp(payload);
+        std::array<uint8_t, 24> alt_payload;
+        std::span<uint8_t> write_payload_sp(alt_payload);
 
-        common::write_int(payload_sp, write_t.id);
-        common::write_int(payload_sp, write_t.sweets);
-        common::write_int(payload_sp, write_t.lollies);
-        common::write_int(payload_sp, write_t.pop);
+        common::write(write_payload_sp, write_t.id);
+        common::write(write_payload_sp, write_t.sweets);
+        common::write(write_payload_sp, write_t.lollies);
+        common::write(write_payload_sp, write_t.pop);
 
         test_t send_t;
+        std::span<uint8_t> read_payload_sp(alt_payload);
 
-        send_t.id = common::read_int<int64_t>(payload_sp);
-        send_t.sweets = common::read_int<uint32_t>(payload_sp);
-        send_t.lollies = common::read_int<int16_t>(payload_sp);
-        send_t.pop = common::read_int<uint8_t>(payload_sp);
+        send_t.id = common::read<int64_t>(read_payload_sp);
+        send_t.sweets = common::read<uint32_t>(read_payload_sp);
+        send_t.lollies = common::read<float>(read_payload_sp);
+        send_t.pop = common::read<double>(read_payload_sp);
 
         REQUIRE(write_t == send_t);
     }
