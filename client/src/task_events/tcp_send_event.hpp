@@ -31,7 +31,7 @@ namespace client {
 
         static void send(const tcp_event_data_t& data, TickType_t block_tick = pdMS_TO_TICKS(10)) {
             if (s_event == nullptr) {
-                ESP_LOGI("TCP_EVENT", "Event not created to send");
+                ESP_LOGI("TCP_EVENT", "Event not created to send!");
                 return;
             } 
 
@@ -40,7 +40,7 @@ namespace client {
 
         static bool receive(tcp_event_data_t& data_ref, TickType_t timeout_tick = portMAX_DELAY) {
             if (s_event == nullptr) {
-                ESP_LOGI("TCP_EVENT", "Event not created to receive");
+                ESP_LOGI("TCP_EVENT", "Event not created to receive!");
                 return false;
             } 
 

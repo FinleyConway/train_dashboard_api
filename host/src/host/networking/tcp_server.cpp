@@ -65,6 +65,8 @@ namespace host {
                 m_acceptor.listen();
             }
             catch(const std::exception& e) {
+                LOG_ERROR("Failed to accepted - Reason: {}", e.what());
+
                 return tcp_status_t::fail_to_accept;
             }
 

@@ -39,18 +39,33 @@ namespace client {
 
                     tcp_status_t status = client.listen_to_server();
 
-                    if (status == tcp_status_t::unknown_packet) {
-                        // assert, message wasnt registerd
-                        // I should also really add logs for more context with errno.....
-                        ESP_LOGI("TCP_TASK", "Received an unknown messsage?");
-                        continue;
-                    }
-                    
-                    if (status == tcp_status_t::failure || status == tcp_status_t::connection_closed) {
-                        break;
+                    switch (status) {
+
+                        case tcp_status_t::success: break;
+
+                        case tcp_status_t::timeout:
+                            ESP_LOGW("TCP_TASK", "Timeout, trying again");
+                            break;
+
+                        case tcp_status_t::unknown_packet:
+                            ESP_LOGW("TCP_TASK", "Unknown packet received");
+                            continue;
+
+                        case tcp_status_t::connection_closed:
+                            ESP_LOGW("TCP_TASK", "Server closed connection");
+                            goto disconnect;
+
+                        case tcp_status_t::failed_to_connect:
+                        case tcp_status_t::socket_failure:
+                        case tcp_status_t::failure:
+                        default:
+                            ESP_LOGE("TCP_TASK", "Fatal socket error in recv loop (%d)", static_cast<int>(status));
+                            goto disconnect; 
+
                     }
                 }
-
+            
+            disconnect:
                 ESP_LOGI("TCP_TASK", "Disconnected");
 
                 client.disconnect();
@@ -67,7 +82,7 @@ namespace client {
             // TODO: Add retry attempts
 
             constexpr TickType_t retry_delay = pdMS_TO_TICKS(5000);
-            constexpr int32_t tcp_timeout_sec = 5;
+            constexpr int32_t tcp_timeout_sec = 60;
             
             ESP_LOGI("TCP_TASK", "Connecting...");
 
@@ -82,19 +97,45 @@ namespace client {
             tcp_status_t status{};
             tcp_event_data_t event_data;
 
-            if (tcp_send_event_t::receive(event_data, 0)) {
-                switch (event_data.type) {
-                    case tcp_event_data_t::type_t::init_respond:
-                        status = client.send_to_server(event_data.init_respond);
-                        break;
+            if (!tcp_send_event_t::receive(event_data, 0)) return true; // nothing to send
+
+            switch (event_data.type) {
+
+                case tcp_event_data_t::type_t::init_respond: {
+                    status = client.send_to_server(event_data.init_respond);
+                    break;
                 }
 
-                if (status != tcp_status_t::success) {
-                    return false;
-                }
             }
 
-            return true;
+            if (status == tcp_status_t::success) {
+                return true;
+            }
+
+            return handle_send_errors(status);
+        }
+
+        static bool handle_send_errors(tcp_status_t status) {
+            switch (status) {
+
+                case tcp_status_t::timeout:
+                    ESP_LOGW("TCP_TASK", "Timeout, trying again");
+                    return true; 
+
+                case tcp_status_t::connection_closed:
+                    ESP_LOGW("TCP_TASK", "Connection closed during send");
+                    return false;
+
+                case tcp_status_t::socket_failure:
+                    ESP_LOGE("TCP_TASK", "Socket failure during send (errno=%d)", errno);
+                    return false;
+
+                case tcp_status_t::failure:
+                default:
+                    ESP_LOGE("TCP_TASK", "Unknown send failure (status=%d, errno=%d)", static_cast<int>(status), errno);
+                    return false;
+
+            }
         }
 
     private:
