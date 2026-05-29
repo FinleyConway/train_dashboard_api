@@ -1,10 +1,11 @@
 #pragma once
 
 #include <type_traits>
-#include <concepts>
 #include <cstdint>
+#include <cassert>
 #include <cstring>
 #include <array>
+#include <span>
 #include <bit>
 
 #define EMPTY_MESSAGE(type)                                                     \
@@ -60,6 +61,11 @@ namespace common {
             }
 
             return arr;
+        }
+
+        template <typename... Ts>
+        static constexpr size_t message_size() {
+            return (sizeof(Ts) + ...);
         }
 
     private:

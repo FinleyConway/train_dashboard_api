@@ -81,6 +81,7 @@ namespace common {
             const auto& callback = m_callback[id];
 
             if (callback.invoke == nullptr) return false; // nothing to call
+            if (bytes < sizeof(packet_id_t)) return false; // prevent underflow
             if (bytes - sizeof(packet_id_t) != callback.size) return false; // byte mismatch
 
             callback.invoke(std::span<uint8_t> {
@@ -104,17 +105,24 @@ namespace common {
             };
         }
 
-        size_t packet_size(packet_id_t id) const {
-            if (id >= m_callback.size()) return 0;
-            return m_callback[id].size;
+        std::optional<size_t> expected_payload_size(packet_id_t id) const {
+            if (id >= m_callback.size()) return std::nullopt;
+            return std::make_optional(m_callback[id].size);
         }
         
         template<typename T>
-        size_t packet_size() const {
-            return m_callback.at(get_type_of<T>()).size;
+        constexpr size_t packet_size() {
+            return sizeof(packet_id_t) + T::payload_size();
         }
 
     private:
         std::array<callback_info_t, sizeof...(Ts)> m_callback;
     };
+
+    // Globally provide a compile time size payload from registry.
+    // std::array<uint8_t, {size_of_max_message_type}> 
+    using payload_t = registry_t::payload_t;
+    
+    // The compile time id for each message.
+    using packet_id_t = registry_t::packet_id_t;
 }
