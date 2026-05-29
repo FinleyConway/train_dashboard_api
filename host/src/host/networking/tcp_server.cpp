@@ -16,6 +16,10 @@ namespace host {
         shutdown();
     }
 
+    asio::io_context& tcp_server_t::get_io_context() {
+        return m_io_context;
+    }
+
     void tcp_server_t::start() {
         m_io_thread = std::thread([this] {
             m_mdns_service.start(

@@ -1,5 +1,4 @@
-#include <iostream>
-
+#include "host/utils/handshake_manager.hpp"
 #include "host/networking/tcp_server.hpp"
 #include "host/logging/logger.hpp"
 
@@ -8,8 +7,10 @@
 int main() {
     host::logger_t::init();
     host::tcp_server_t server;
+    host::handshake_manager_t handshake(server, std::chrono::seconds(1));
 
     server.register_on_connect([&](common::esp_id_t id) {
+        handshake.on_connect(id);
     });
 
     server.register_on_disconnect([&](common::esp_id_t id) {
@@ -17,6 +18,7 @@ int main() {
     });
 
     server.register_receive_callback<common::esp_init_response_t>([&](const common::esp_init_response_t& res) {
+        handshake.on_response_received(res);
     });
 
     server.start();

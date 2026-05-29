@@ -7,6 +7,8 @@ add_library(host_lib
     src/host/networking/tcp_connection.cpp
     src/host/networking/tcp_io_state.cpp
     src/host/networking/tcp_server.cpp
+    
+    src/host/utils/handshake_manager.cpp
 )
 
 target_include_directories(host_lib PUBLIC

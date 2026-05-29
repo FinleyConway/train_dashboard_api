@@ -41,7 +41,7 @@ namespace client {
         static bool receive(tcp_event_data_t& data_ref, TickType_t timeout_tick = portMAX_DELAY) {
             if (s_event == nullptr) {
                 ESP_LOGI("TCP_EVENT", "Event not created to receive");
-                return;
+                return false;
             } 
 
             return xQueueReceive(s_event, &data_ref, timeout_tick) == pdPASS;
