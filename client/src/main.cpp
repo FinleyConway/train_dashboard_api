@@ -5,15 +5,13 @@
 #include "task_events/tcp_send_event.hpp"
 #include "tasks/tcp_task.hpp"
 
+
 extern "C" void app_main() {
-    nvs_flash_init();
+    static client::wifi_t wifi;
 
-    client::wifi_status_t status = client::wifi_boot_t::connect();
-
-    if (status == client::wifi_status_t::failure) {
-        ESP_LOGI("ESP_MAIN", "Failed to associate to AP, dying...");
-
-        return;
+    esp_err_t ret = wifi.connect("...", "...");
+    if (ret != ESP_OK) {
+        ESP_LOGE("MAIN", "Failed to connect to network");
     }
 
     client::tcp_send_event_t::create(10);
