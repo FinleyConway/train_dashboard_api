@@ -15,8 +15,8 @@ namespace client {
 
         wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
 
-        strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
-        strncpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
+        strlcpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+        strlcpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
 
         ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE)); // default is WIFI_PS_MIN_MODEM
         ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM)); // default is WIFI_STORAGE_FLASH
