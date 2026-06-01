@@ -10,6 +10,7 @@
 #include <freertos/FreeRTOS.h>
 
 // https://developer.espressif.com/blog/getting-started-with-wifi-on-esp-idf/#part-2-using-the-wi-fi-apis
+// https://developer.espressif.com/blog/2025/04/soft-ap-tutorial/#starting-the-soft-ap
 
 namespace client {
     class wifi_t {  
@@ -18,12 +19,16 @@ namespace client {
 
         ~wifi_t();
 
-        esp_err_t connect(const char* ssid, const char* password);
+        esp_err_t connect(const char* ssid, const char* password, bool is_ap);
 
         esp_err_t disconnect();
 
     private:
         esp_err_t init();
+
+        esp_err_t start_sta(const char* ssid, const char* passwor);
+
+        esp_err_t start_ap(const char* ssid, const char* passwor);
 
         esp_err_t deinit();
 

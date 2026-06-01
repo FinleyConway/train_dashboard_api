@@ -9,7 +9,7 @@
 extern "C" void app_main() {
     static client::wifi_t wifi;
 
-    esp_err_t ret = wifi.connect("...", "...");
+    esp_err_t ret = wifi.connect("esp", "", true);
     if (ret != ESP_OK) {
         ESP_LOGE("MAIN", "Failed to connect to network");
     }
