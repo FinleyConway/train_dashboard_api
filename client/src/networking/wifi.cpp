@@ -8,9 +8,7 @@ namespace client {
     }
 
     wifi_t::~wifi_t() {
-        if (deinit() != ESP_OK) {
-            ESP_LOGE(c_tag, "Failed to deinitialize Wi-Fi");
-        }
+        ESP_ERROR_CHECK_WITHOUT_ABORT(deinit());
     }
 
     esp_err_t wifi_t::connect(const char* ssid, const char* password, bool is_ap) {
@@ -57,8 +55,7 @@ namespace client {
         return ret;
     }
 
-    esp_err_t wifi_t::start_sta(const char* ssid, const char* password)
-    {
+    esp_err_t wifi_t::start_sta(const char* ssid, const char* password) {
         ESP_ERROR_CHECK(esp_wifi_set_default_wifi_sta_handlers());
 
         s_netif = esp_netif_create_default_wifi_sta();
@@ -113,8 +110,7 @@ namespace client {
         return ESP_FAIL;
     }
 
-    esp_err_t wifi_t::start_ap(const char* ssid, const char* password)
-    {
+    esp_err_t wifi_t::start_ap(const char* ssid, const char* password) {
         esp_netif_create_default_wifi_ap();
 
         wifi_config_t wifi_config = {};
@@ -135,8 +131,7 @@ namespace client {
         return esp_wifi_start();
     }
 
-    esp_err_t wifi_t::deinit()
-    {
+    esp_err_t wifi_t::deinit() {
         if (s_wifi_event_group != nullptr) {
             vEventGroupDelete(s_wifi_event_group);
         }
@@ -147,12 +142,12 @@ namespace client {
             return ret;
         }
 
-        ESP_ERROR_CHECK(esp_wifi_deinit());
-        ESP_ERROR_CHECK(esp_wifi_clear_default_wifi_driver_and_handlers(s_netif));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_deinit());
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_clear_default_wifi_driver_and_handlers(s_netif));
         esp_netif_destroy(s_netif);
 
-        ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, ESP_EVENT_ANY_ID, s_ip_event_handler));
-        ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, s_wifi_event_handler));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_event_handler_instance_unregister(IP_EVENT, ESP_EVENT_ANY_ID, s_ip_event_handler));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, s_wifi_event_handler));
 
         return ESP_OK;
     }
