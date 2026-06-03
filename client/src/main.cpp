@@ -1,6 +1,7 @@
-#include <nvs_flash.h>
+#include <esp_err.h>
 
 #include "networking/wifi/wifi.hpp"
+#include "networking/wifi//wifi_provisioning.hpp"
 
 #include "task_events/tcp_send_event.hpp"
 #include "tasks/tcp_task.hpp"
@@ -8,18 +9,19 @@
 
 extern "C" void app_main() {
     static client::wifi_t wifi;
+    client::wifi_provisioning_t wifi_prov(wifi);
 
-    esp_err_t ret = wifi.start_provisioning("esp", "", 1);
-    if (ret != ESP_OK) {
-        ESP_LOGE("MAIN", "Failed to connect to network");
+    ESP_ERROR_CHECK(wifi_prov.start_softap("esp", "", 1));
+    ESP_ERROR_CHECK(wifi_prov.start_sta_provisioning("ssid", "password"));
+
+    if (wifi_prov.wait_connection()) {
+        ESP_ERROR_CHECK(wifi_prov.stop());
+
+        ESP_ERROR_CHECK(wifi.connect("ssid", "password"));
+
+        if (wifi.wait_connection()) {
+            client::tcp_send_event_t::create(10);
+            client::tcp_task_t::init(2);
+        }
     }
-
-    wifi.start_sta_provisioning("ssid", "password");
-
-    wifi.stop_provisioning();
-
-    wifi.connect("ssid", "password");
-
-    client::tcp_send_event_t::create(10);
-    client::tcp_task_t::init(2);
 }

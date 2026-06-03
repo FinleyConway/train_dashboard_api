@@ -4,8 +4,6 @@
 
 #include <esp_wifi.h>
 
-#define ESP_AP_CHANNEL 1
-
 namespace client {
     class wifi_config_t {
     public:
@@ -16,7 +14,7 @@ namespace client {
             strlcpy((char*)cfg.ap.password, password, sizeof(cfg.ap.password));
 
             cfg.ap.ssid_len = strlen(ssid);
-            cfg.ap.channel = ESP_AP_CHANNEL;
+            cfg.ap.channel = 1;
             cfg.ap.max_connection = max_connections;
             cfg.ap.authmode = WIFI_AUTH_WPA2_PSK;
             cfg.ap.pmf_cfg.required = false;

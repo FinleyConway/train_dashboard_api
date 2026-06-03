@@ -17,7 +17,7 @@ namespace client {
 
     class wifi_t {
     public:
-        wifi_t() {
+        explicit wifi_t(const uint8_t retry_attempts = 3) : c_retry_attempts(retry_attempts) {
             // TODO: This could be in its own section/file?
             // initialize nvs
             esp_err_t ret = nvs_flash_init();
@@ -55,7 +55,7 @@ namespace client {
             wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
             ESP_ERROR_CHECK(esp_wifi_init(&cfg));
         }
-    
+
         ~wifi_t() {
             ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_stop());
             ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_deinit());
@@ -86,121 +86,12 @@ namespace client {
             vEventGroupDelete(m_event_group);
         }
 
-        esp_err_t connect(const char* ssid, const char* password) {
-            ESP_ERROR_CHECK(set_mode(wifi_mode_t::sta));
-
-            handle_create_netif(wifi_mode_t::sta);
-
-            ESP_ERROR_CHECK(wifi_config_t::init_station(ssid, password));
-
-            m_retry_count = 0;
-            xEventGroupClearBits(
-                m_event_group,
-                c_connected_bit | c_fail_bit
-            );
-
-            ESP_ERROR_CHECK(esp_wifi_start());
-
-            EventBits_t bits = xEventGroupWaitBits(
-                m_event_group,
-                c_connected_bit | c_fail_bit,
-                pdFALSE,
-                pdFALSE,
-                portMAX_DELAY
-            );
-
-            if (bits & c_connected_bit) {
-                return ESP_OK;
-            }
-
-            return ESP_FAIL;
-        }
-
-
-        esp_err_t start_provisioning(const char* ssid, const char* password, uint8_t max_connections) {
-            ESP_ERROR_CHECK(set_mode(wifi_mode_t::sta_ap));
-
-            handle_create_netif(wifi_mode_t::sta_ap);
-
-            ESP_ERROR_CHECK(wifi_config_t::init_softap(ssid, password, max_connections));
-
-            ESP_LOGI(c_tag, "Starting wifi provisioning");
-
-            m_is_softap_provisioning = true;
-
+        esp_err_t start() {
             return esp_wifi_start();
         }
 
-        esp_err_t start_sta_provisioning(const char* ssid, const char* password) {
-            ESP_LOGI(c_tag, "Starting wifi sta provisioning");
-
-            m_is_softap_provisioning = false; 
-
-            ESP_ERROR_CHECK(esp_wifi_stop());
-            ESP_ERROR_CHECK(set_mode(wifi_mode_t::sta_ap));
-            ESP_ERROR_CHECK(wifi_config_t::init_station(ssid, password));
-
-            m_retry_count = 0;
-            xEventGroupClearBits(
-                m_event_group,
-                c_connected_bit | c_fail_bit
-            );
-
-            ESP_ERROR_CHECK(esp_wifi_start());
-
-            EventBits_t bits = xEventGroupWaitBits(
-                m_event_group,
-                c_connected_bit | c_fail_bit,
-                pdFALSE,
-                pdFALSE,
-                portMAX_DELAY
-            );
-
-            if (bits & c_connected_bit) {
-                ESP_LOGI(c_tag, "Wifi sta provisioning connected");
-
-                return ESP_OK;
-            }
-
-            return ESP_FAIL;
-        }
-
-        esp_err_t stop_provisioning() {
-            // stop ap_sta
-            ESP_ERROR_CHECK(esp_wifi_disconnect());
-
-            // wake up and stop sta
-            xEventGroupSetBits(m_event_group, c_fail_bit);
-
-            m_retry_count = 0;
-
-            ESP_LOGI(c_tag, "Stopping wifi provisioning");
-
-            return set_mode(wifi_mode_t::none);
-        }
-
-    private:
-        void handle_create_netif(wifi_mode_t mode) {
-            switch (mode) {
-                case (wifi_mode_t::sta): {
-                    if (m_sta_netif == nullptr) {
-                        m_sta_netif = esp_netif_create_default_wifi_sta();
-                    }
-                    break;
-                }
-
-                case (wifi_mode_t::sta_ap): {
-                    if (m_sta_netif == nullptr) {
-                        m_sta_netif = esp_netif_create_default_wifi_sta();
-                    }
-                    if (m_ap_netif == nullptr) {
-                        m_ap_netif = esp_netif_create_default_wifi_ap();
-                    }
-                    break;
-                }
-
-                default: break;
-            }
+        esp_err_t stop() {
+            return esp_wifi_stop();
         }
 
         esp_err_t set_mode(wifi_mode_t mode) {
@@ -213,59 +104,100 @@ namespace client {
                 ESP_ERROR_CHECK(esp_wifi_stop());
             }
 
+            handle_create_netif(mode);
             m_mode = mode;
 
             switch (mode) {
                 case (wifi_mode_t::none):   return esp_wifi_set_mode(WIFI_MODE_NULL);
                 case (wifi_mode_t::sta):    return esp_wifi_set_mode(WIFI_MODE_STA);
                 case (wifi_mode_t::sta_ap): return esp_wifi_set_mode(WIFI_MODE_APSTA);
-                default:                    return ESP_FAIL;
+            }
+
+            ESP_LOGE(c_tag, "Can't set wifi mode!");
+
+            return ESP_FAIL;
+        }
+
+        esp_err_t set_sta_config(const char* ssid, const char* password) {
+            return wifi_config_t::init_station(ssid, password);
+        }
+
+        esp_err_t set_softap_config(const char* ssid, const char* password, uint8_t max_connections) {
+            return wifi_config_t::init_softap(ssid, password, max_connections);
+        }
+
+        esp_err_t connect(const char* ssid, const char* password) {
+            ESP_ERROR_CHECK(set_mode(wifi_mode_t::sta));
+            ESP_ERROR_CHECK(wifi_config_t::init_station(ssid, password));
+
+            reset_retry();
+
+            xEventGroupClearBits(m_event_group, c_connected_bit | c_fail_bit);
+
+            return esp_wifi_start();
+        }
+
+        esp_err_t disconnect() {
+            return esp_wifi_disconnect();
+        }
+
+        bool wait_connection() {
+            ESP_LOGI(c_tag, "Trying to connect");
+
+            EventBits_t bits = xEventGroupWaitBits(
+                m_event_group,
+                c_connected_bit | c_fail_bit,
+                pdFALSE,
+                pdFALSE,
+                portMAX_DELAY
+            );
+
+            return (bits & c_connected_bit);
+        }
+
+        void reset_retry() {
+            m_retry_count = 0;
+        }
+
+    private:
+        void handle_create_netif(wifi_mode_t mode) {
+            if (mode == wifi_mode_t::sta || mode == wifi_mode_t::sta_ap) {
+                if (!m_sta_netif) m_sta_netif = esp_netif_create_default_wifi_sta();
+            }
+
+            if (mode == wifi_mode_t::sta_ap) {
+                if (!m_ap_netif) m_ap_netif = esp_netif_create_default_wifi_ap();
             }
         }
 
         static void wifi_event(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
             auto* self = static_cast<wifi_t*>(arg);
 
-            switch (event_id) {
-                case (WIFI_EVENT_STA_START): {
-                    ESP_LOGI(c_tag, "Station started");
-                    ESP_ERROR_CHECK(esp_wifi_connect());
-                    break;
+            if (event_id == WIFI_EVENT_STA_START) {
+                ESP_ERROR_CHECK(esp_wifi_connect());
+            }
+
+            if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
+                if (self->m_retry_count < self->c_retry_attempts) {
+                    ESP_LOGW(c_tag, "Failed to connect, retrying...");
+
+                    self->m_retry_count++;
+                    esp_wifi_connect();
+
+                    return;
                 }
 
-                case (WIFI_EVENT_STA_DISCONNECTED): {
-                    ESP_LOGW(c_tag, "Station disconneceted");
-
-                    if (self->m_is_softap_provisioning) return;
-
-                    if (self->m_retry_count < c_retry_attempts) {
-                        self->m_retry_count++;
-
-                        esp_wifi_connect();
-
-                        return;
-                    }
-
-                    ESP_LOGE(c_tag, "Connection failed");
-                    xEventGroupSetBits(self->m_event_group, c_fail_bit);
-                    break;
-                }
-
-                default: break;
+                ESP_LOGE(c_tag, "Failed to connect!");
+                xEventGroupSetBits(self->m_event_group, c_fail_bit);
             }
         }
 
         static void ip_event(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
             auto* self = static_cast<wifi_t*>(arg);
 
-            switch (event_id) {
-                case (IP_EVENT_STA_GOT_IP): {
-                    self->m_retry_count = 0;
-                    xEventGroupSetBits(self->m_event_group, c_connected_bit);
-                    break;
-                }
-
-                default: break;
+            if (event_id == IP_EVENT_STA_GOT_IP) {
+                self->m_retry_count = 0;
+                xEventGroupSetBits(self->m_event_group, c_connected_bit);
             }
         }
 
@@ -284,8 +216,6 @@ namespace client {
         esp_netif_t* m_sta_netif = nullptr;
 
         uint8_t m_retry_count = 0;
-        static constexpr uint8_t c_retry_attempts = 3;
-
-        bool m_is_softap_provisioning = false;
+        const uint8_t c_retry_attempts = 3;
     };
 }
