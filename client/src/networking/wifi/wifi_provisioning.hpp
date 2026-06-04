@@ -13,17 +13,17 @@ namespace client {
         esp_err_t start_softap(const char* ssid, const char* password, uint8_t max_connections) {
             ESP_LOGI("WIFI_PROV", "Starting provisioning");
 
-            m_wifi.is_softap_provisioning(true);
             ESP_ERROR_CHECK(m_wifi.set_mode(wifi_mode_t::sta_ap));
             ESP_ERROR_CHECK(m_wifi.set_softap_config(ssid, password, max_connections));
 
             return m_wifi.start();
         }
 
-        esp_err_t start_sta_provisioning(const char* ssid, const char* password) {
+        esp_err_t try_station_connect(const char* ssid, const char* password) {
+            if (m_wifi.get_mode() != wifi_mode_t::sta_ap) return ESP_FAIL;
+
             ESP_LOGI("WIFI_PROV", "Starting station provisioning");
 
-            m_wifi.is_softap_provisioning(false);
             ESP_ERROR_CHECK(m_wifi.set_sta_config(ssid, password));
             m_wifi.reset_retry();
             

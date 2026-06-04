@@ -118,8 +118,8 @@ namespace client {
             return ESP_FAIL;
         }
 
-        void is_softap_provisioning(bool state) {
-            m_is_softap_prov = state;
+        wifi_mode_t get_mode() const {
+            return m_mode;
         }
 
         esp_err_t set_sta_config(const char* ssid, const char* password) {
@@ -130,7 +130,7 @@ namespace client {
             return wifi_config_t::init_softap(ssid, password, max_connections);
         }
 
-        esp_err_t connect() {
+        esp_err_t connect_from_nvs() {
             ::wifi_config_t cfg;
 
             ESP_ERROR_CHECK(set_mode(wifi_mode_t::sta));
@@ -229,7 +229,5 @@ namespace client {
 
         uint8_t m_retry_count = 0;
         const uint8_t c_retry_attempts = 3;
-
-        bool m_is_softap_prov = false;
     };
 }
