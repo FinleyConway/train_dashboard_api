@@ -18,6 +18,8 @@ server.register_receive_callback<common::esp_init_response_t>([&](const common::
     handshake.on_response_received(res);
 });
 
+// -------------------------------------------------------------------------------------------------------------
+
 // Client
 static void on_init_request(const common::esp_init_request_t& init_request) {
     ESP_LOGI("TCP_TASK", "Received server response, sending ack...");
@@ -39,13 +41,37 @@ client.listen_to_server();
 
 ## Building and Running
 ### Client
-Uses VSCode PlatformIO IDE extension to build, flash and monitor esp32s.
+Uses esp-idf to build, flash and monitor esp32s.
 
-#### TODO: Be able to flash wifi informations and other important information
+Follow the [Get Started](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/index.html) provided by Espressif to get the tools needed to use this project.
+
+```bash
+# building project
+idf.py build flash
+idf.py monitor # to monitor logs being printed to console
+```
+
+#### Flashing WiFi credentials
+During start if no WiFi credentials are not stored inside the nvs parition, it will start up a access point that a device e.g. mobile phone can connect to.
+
+It exposes a http endpoint which expects a POST response:
+```
+# typically 192.168.4.1
+192.168.4.1/wifi_cred
+```
+
+```
+# body example
+{
+    "ssid": "network_name",
+    "password": "super_secret_password"
+}
+```
+
 ---
 ### Server:
 
-### Windows (Not Support)
+### Windows (Not Support): See: [mdns_service.hpp](host/src/host/networking/mdns_service.hpp)
 
 ### Linux and Mac:
 ```bash
