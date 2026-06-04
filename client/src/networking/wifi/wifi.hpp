@@ -118,6 +118,10 @@ namespace client {
             return ESP_FAIL;
         }
 
+        void is_softap_provisioning(bool state) {
+            m_is_softap_prov = state;
+        }
+
         esp_err_t set_sta_config(const char* ssid, const char* password) {
             return wifi_config_t::init_station(ssid, password);
         }
@@ -126,9 +130,11 @@ namespace client {
             return wifi_config_t::init_softap(ssid, password, max_connections);
         }
 
-        esp_err_t connect(const char* ssid, const char* password) {
+        esp_err_t connect() {
+            ::wifi_config_t cfg;
+
             ESP_ERROR_CHECK(set_mode(wifi_mode_t::sta));
-            ESP_ERROR_CHECK(wifi_config_t::init_station(ssid, password));
+            ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &cfg));
 
             reset_retry();
 
@@ -174,10 +180,14 @@ namespace client {
             auto* self = static_cast<wifi_t*>(arg);
 
             if (event_id == WIFI_EVENT_STA_START) {
+                if (self->m_is_softap_prov) return;
+
                 ESP_ERROR_CHECK(esp_wifi_connect());
             }
 
             if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
+                if (self->m_is_softap_prov) return;
+
                 if (self->m_retry_count < self->c_retry_attempts) {
                     ESP_LOGW(c_tag, "Failed to connect, retrying...");
 
@@ -217,5 +227,7 @@ namespace client {
 
         uint8_t m_retry_count = 0;
         const uint8_t c_retry_attempts = 3;
+
+        bool m_is_softap_prov = false;
     };
 }

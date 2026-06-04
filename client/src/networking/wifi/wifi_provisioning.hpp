@@ -13,6 +13,7 @@ namespace client {
         esp_err_t start_softap(const char* ssid, const char* password, uint8_t max_connections) {
             ESP_LOGI("WIFI_PROV", "Starting provisioning");
 
+            m_wifi.is_softap_provisioning(true);
             ESP_ERROR_CHECK(m_wifi.set_mode(wifi_mode_t::sta_ap));
             ESP_ERROR_CHECK(m_wifi.set_softap_config(ssid, password, max_connections));
 
@@ -22,6 +23,7 @@ namespace client {
         esp_err_t start_sta_provisioning(const char* ssid, const char* password) {
             ESP_LOGI("WIFI_PROV", "Starting station provisioning");
 
+            m_wifi.is_softap_provisioning(false);
             m_wifi.stop();
             ESP_ERROR_CHECK(m_wifi.set_mode(wifi_mode_t::sta_ap));
             ESP_ERROR_CHECK(m_wifi.set_sta_config(ssid, password));
