@@ -40,6 +40,8 @@ void stop_webserver(httpd_handle_t server) {
 static esp_err_t wifi_cred_post_handler(httpd_req_t* req) {
     ESP_LOGI("HTTP", "Receiving wifi creds from http");
 
+    ESP_LOGI("HTTP", "Buffer size: %lu", req->content_len + 1);
+
     char* buffer = new char[req->content_len + 1];
     size_t offset = 0;
     int bytes_recv = 0;
@@ -126,6 +128,8 @@ static esp_err_t wifi_cred_post_handler(httpd_req_t* req) {
         return ESP_FAIL;
     }
 
+    ESP_LOGI("HTTP", "Got creds: %s, %s", ssid_str, password_str);
+
     std::strncpy(g_ssid, ssid_str, ssid_len);
     std::strncpy(g_password, password_str, password_len);
     xEventGroupSetBits(g_event_group, g_received_bit);
@@ -184,9 +188,7 @@ extern "C" void app_main() {
 
                     ESP_LOGW("HTTP", "Success!");
 
-                    ESP_ERROR_CHECK(wifi.connect());
-
-                    wifi.wait_connection();
+                    esp_restart();
                 }
                 else {
                     xEventGroupClearBits(g_event_group, g_received_bit | g_fail_bit);
@@ -202,6 +204,5 @@ extern "C" void app_main() {
         }
     }
 
-    client::tcp_send_event_t::create(10);
-    client::tcp_task_t::init(2);
+    ESP_LOGI("YEYY", "WORKS??");
 }

@@ -24,11 +24,10 @@ namespace client {
             ESP_LOGI("WIFI_PROV", "Starting station provisioning");
 
             m_wifi.is_softap_provisioning(false);
-            m_wifi.stop();
-            ESP_ERROR_CHECK(m_wifi.set_mode(wifi_mode_t::sta_ap));
             ESP_ERROR_CHECK(m_wifi.set_sta_config(ssid, password));
-
-            return m_wifi.start();
+            m_wifi.reset_retry();
+            
+            return esp_wifi_connect();
         }
 
         bool wait_connection() {

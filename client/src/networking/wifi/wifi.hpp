@@ -138,8 +138,6 @@ namespace client {
 
             reset_retry();
 
-            xEventGroupClearBits(m_event_group, c_connected_bit | c_fail_bit);
-
             return esp_wifi_start();
         }
 
@@ -163,6 +161,7 @@ namespace client {
 
         void reset_retry() {
             m_retry_count = 0;
+            xEventGroupClearBits(m_event_group, c_connected_bit | c_fail_bit);
         }
 
     private:
@@ -180,13 +179,16 @@ namespace client {
             auto* self = static_cast<wifi_t*>(arg);
 
             if (event_id == WIFI_EVENT_STA_START) {
-                if (self->m_is_softap_prov) return;
+                //if (self->m_is_softap_prov) return;
 
-                ESP_ERROR_CHECK(esp_wifi_connect());
+                if (esp_wifi_connect() != ESP_OK) {
+                    ESP_LOGE(c_tag, "Failed to connect!");
+                    xEventGroupSetBits(self->m_event_group, c_fail_bit);
+                }
             }
 
             if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
-                if (self->m_is_softap_prov) return;
+                //if (self->m_is_softap_prov) return;
 
                 if (self->m_retry_count < self->c_retry_attempts) {
                     ESP_LOGW(c_tag, "Failed to connect, retrying...");
