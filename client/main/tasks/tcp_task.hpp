@@ -102,7 +102,7 @@ namespace client {
             switch (event_data.type) {
 
                 case tcp_event_data_t::type_t::init_respond: {
-                    status = client.send_to_server(event_data.init_respond);
+                    status = client.send_to_server(event_data.data.init_respond);
                     break;
                 }
 
@@ -142,12 +142,13 @@ namespace client {
         static void on_init_request(const common::esp_init_request_t& init_request) {
             ESP_LOGI("TCP_TASK", "Received server response, sending ack...");
 
-            tcp_send_event_t::send(tcp_event_data_t {
-                .type = tcp_event_data_t::type_t::init_respond,
-                .init_respond = {
-                    .id = init_request.id
-                }
-            });
+            tcp_event_data_t event_data;
+            event_data.type = tcp_event_data_t::type_t::init_respond;
+            event_data.data.init_respond = {
+                .id = init_request.id
+            };
+
+            tcp_send_event_t::send(event_data);
 
             // store id somewhere
         }
