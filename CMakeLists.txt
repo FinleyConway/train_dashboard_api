@@ -17,6 +17,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 # deps
 add_subdirectory(vendors/spdlog)
 add_subdirectory(vendors/Catch2)
+add_subdirectory(vendors/json)
 
 # internal
 add_subdirectory(common)
