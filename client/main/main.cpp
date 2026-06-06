@@ -32,6 +32,10 @@ extern "C" void app_main() {
 
     ESP_LOGI("main", "connected");
 
+    // events
     client::tcp_send_event_t::create(10);
+    client::motor_command_t::create();
+
+    // tasks
     client::tcp_task_t::init(2);
 }

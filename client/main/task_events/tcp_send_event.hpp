@@ -11,7 +11,9 @@ namespace client {
             init_respond
         } type;
 
-        common::esp_init_response_t init_respond;
+        union data_t {
+            common::esp_init_response_t init_respond;
+        } data;
     };
 
     class tcp_send_event_t {

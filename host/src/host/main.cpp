@@ -7,6 +7,8 @@
 #include <nlohmann/json.hpp>
 #include <httplib.h>
 
+
+
 int main() {
     host::logger_t::init();
     host::tcp_server_t server;
@@ -32,5 +34,6 @@ int main() {
     }
 
     while(server.is_running()) {
+        
     }
 }

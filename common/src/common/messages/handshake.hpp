@@ -5,7 +5,7 @@
 
 namespace common {
     struct esp_init_request_t {
-        common::esp_id_t id = 0;
+        common::esp_id_t id;
 
         static void serialise(std::span<uint8_t>& payload, const esp_init_request_t& data) {
             serialise_t::write(payload, data.id);
@@ -25,7 +25,7 @@ namespace common {
     };
 
     struct esp_init_response_t {
-        common::esp_id_t id = 0;
+        common::esp_id_t id;
 
         static void serialise(std::span<uint8_t>& payload, const esp_init_response_t& data) {
             serialise_t::write(payload, data.id);
