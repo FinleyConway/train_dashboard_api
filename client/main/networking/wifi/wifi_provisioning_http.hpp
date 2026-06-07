@@ -30,7 +30,7 @@ namespace client {
             }
 
             m_wifi_cred_post_uri = {
-                .uri       = "/wifi_cred",               
+                .uri       = "/wifi_cred/connect",               
                 .method    = HTTP_POST,        
                 .handler   = wifi_cred_post_handler, 
                 .user_ctx  = this            
@@ -45,7 +45,7 @@ namespace client {
             }
 
             m_wifi_cred_get_uri = {
-                .uri       = "/wifi_cred",               
+                .uri       = "/wifi_cred/status",               
                 .method    = HTTP_GET,        
                 .handler   = wifi_cred_post_handler, 
                 .user_ctx  = this            
@@ -54,6 +54,21 @@ namespace client {
             ret = httpd_register_uri_handler(m_http_handle, &m_wifi_cred_get_uri);
             if (ret != ESP_OK) {
                 ESP_LOGE(c_tag, "Failed to register GET URI handler");
+                ESP_ERROR_CHECK(try_stop());
+
+                return ret;
+            }
+
+            m_ping_get_uri = {
+                .uri       = "/ping",               
+                .method    = HTTP_GET,        
+                .handler   = esp_ping_handler, 
+                .user_ctx  = nullptr
+            };
+
+            ret = httpd_register_uri_handler(m_http_handle, &m_ping_get_uri);
+            if (ret != ESP_OK) {
+                ESP_LOGE(c_tag, "Failed to register ping URI handler");
                 ESP_ERROR_CHECK(try_stop());
 
                 return ret;
@@ -166,9 +181,7 @@ namespace client {
                 return ret;
             }
 
-            httpd_resp_sendstr(req, "OK");
-
-            return ESP_OK;
+            return httpd_resp_sendstr(req, "OK");
         }
 
         static esp_err_t wifi_cred_get_handler(httpd_req_t* req) {
@@ -187,6 +200,12 @@ namespace client {
             }
 
             return httpd_resp_sendstr(req, response);
+        }
+
+        static esp_err_t esp_ping_handler(httpd_req_t* req) {
+            ESP_LOGI(c_tag, "Receiving ping from http");
+
+            return httpd_resp_sendstr(req, "OK");
         }
 
     private:
@@ -273,6 +292,7 @@ namespace client {
         httpd_handle_t m_http_handle = nullptr;
         httpd_uri_t m_wifi_cred_post_uri;
         httpd_uri_t m_wifi_cred_get_uri;
+        httpd_uri_t m_ping_get_uri;
 
         EventGroupHandle_t m_event_group = nullptr;
         static constexpr EventBits_t c_received_bit = BIT0;

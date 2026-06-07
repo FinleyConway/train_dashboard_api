@@ -57,7 +57,7 @@ During start if no WiFi credentials are not stored inside the nvs parition, it w
 It exposes a http endpoint which expects a POST response:
 ```
 # typically 192.168.4.1
-192.168.4.1/wifi_cred
+192.168.4.1/wifi_cred/connect
 ```
 
 ```
@@ -69,9 +69,20 @@ It exposes a http endpoint which expects a POST response:
 ```
 It also exposes a GET response to know when the wifi has been connected (this must be called to let esp acknowledge of this connection):
 ```
+# typically 192.168.4.1
+192.168.4.1/wifi_cred/status
+```
+
+```
 {
     "connected": true
 }
+```
+
+Finally, you can also ping the esp to check if you are connected to the softAP:
+```
+# typically 192.168.4.1
+192.168.4.1/ping
 ```
 
 ---
