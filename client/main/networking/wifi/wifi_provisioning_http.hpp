@@ -18,7 +18,7 @@ namespace client {
             if (m_event_group == nullptr) {
                 return ESP_FAIL;
             }
-            xEventGroupClearBits(m_event_group, c_received_bit | c_fail_bit);
+            reset_credentials_check();
 
             httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
@@ -38,7 +38,22 @@ namespace client {
 
             ret = httpd_register_uri_handler(m_http_handle, &m_wifi_cred_post_uri);
              if (ret != ESP_OK) {
-                ESP_LOGE(c_tag, "Failed to register URI handler");
+                ESP_LOGE(c_tag, "Failed to register POST URI handler");
+                ESP_ERROR_CHECK(try_stop());
+
+                return ret;
+            }
+
+            m_wifi_cred_get_uri = {
+                .uri       = "/wifi_cred",               
+                .method    = HTTP_GET,        
+                .handler   = wifi_cred_post_handler, 
+                .user_ctx  = this            
+            };
+
+            ret = httpd_register_uri_handler(m_http_handle, &m_wifi_cred_get_uri);
+            if (ret != ESP_OK) {
+                ESP_LOGE(c_tag, "Failed to register GET URI handler");
                 ESP_ERROR_CHECK(try_stop());
 
                 return ret;
@@ -65,12 +80,37 @@ namespace client {
             return false;
         }
 
+        void set_connected(bool state) {
+            m_is_connected = state;
+        }
+
+        bool has_ack_connection() {
+            EventBits_t bits = xEventGroupWaitBits(
+                m_event_group,
+                c_ack_bit,
+                pdFALSE,
+                pdFALSE,
+                pdMS_TO_TICKS(m_ack_timeout_ms) // prevent hanging if client doesnt respond
+            );
+
+            if (bits & c_ack_bit) {
+                return true;
+            }
+
+            reset_credentials_check();
+
+            return false;
+        }
+
         void reset_credentials_check() {
-            xEventGroupClearBits(m_event_group, c_received_bit | c_fail_bit);
+            xEventGroupClearBits(m_event_group, c_received_bit | c_fail_bit | c_ack_bit);
         }
 
         esp_err_t try_stop() {
             if (m_http_handle == nullptr) return ESP_FAIL;
+
+            vEventGroupDelete(m_event_group);
+            m_event_group = nullptr;
 
             esp_err_t ret = httpd_stop(m_http_handle);
             m_http_handle = nullptr;
@@ -129,6 +169,24 @@ namespace client {
             httpd_resp_sendstr(req, "OK");
 
             return ESP_OK;
+        }
+
+        static esp_err_t wifi_cred_get_handler(httpd_req_t* req) {
+            ESP_LOGI(c_tag, "Receiving wifi creds connecting state from http");
+
+            auto* self = static_cast<wifi_provisioning_http_t*>(req->user_ctx);
+
+            httpd_resp_set_type(req, "application/json");
+
+            const char* response = self->m_is_connected
+                ? R"({"connected": true})"
+                : R"({"connected": false})";
+
+            if (self->m_is_connected) {
+                xEventGroupSetBits(self->m_event_group, c_ack_bit);
+            }
+
+            return httpd_resp_sendstr(req, response);
         }
 
     private:
@@ -214,12 +272,17 @@ namespace client {
 
         httpd_handle_t m_http_handle = nullptr;
         httpd_uri_t m_wifi_cred_post_uri;
+        httpd_uri_t m_wifi_cred_get_uri;
 
         EventGroupHandle_t m_event_group = nullptr;
         static constexpr EventBits_t c_received_bit = BIT0;
         static constexpr EventBits_t c_fail_bit = BIT1;
+        static constexpr EventBits_t c_ack_bit = BIT2;
 
         char m_ssid[32]{};
         char m_password[64]{};
+
+        bool m_is_connected = false;
+        TickType_t m_ack_timeout_ms = 10000; 
     };
 }

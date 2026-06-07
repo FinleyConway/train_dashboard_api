@@ -29,12 +29,16 @@ namespace client {
                     ESP_ERROR_CHECK(try_station_connect(m_http.get_ssid(), m_http.get_password()));
 
                     if (wait_connection()) {
-                        ESP_ERROR_CHECK(m_http.try_stop());
-                        ESP_ERROR_CHECK(stop());
+                        m_http.set_connected(true);
 
-                        ESP_LOGI(c_tag, "Successfully connected!");
+                        if (m_http.has_ack_connection()) {
+                            ESP_ERROR_CHECK(m_http.try_stop());
+                            ESP_ERROR_CHECK(stop());
 
-                        std::forward<Fn>(fn)(true);
+                            ESP_LOGI(c_tag, "Successfully connected!");
+
+                            std::forward<Fn>(fn)(true);
+                        }
                     } 
                     else {
                         std::forward<Fn>(fn)(false);
