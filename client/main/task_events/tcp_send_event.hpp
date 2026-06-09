@@ -7,10 +7,13 @@
 
 namespace client {
     struct tcp_event_data_t {
+        tcp_event_data_t() = default;
+
         enum class type_t {
             init_respond
         } type;
 
+        // this should be fine as messages should only store trivial types
         union data_t {
             common::esp_init_response_t init_respond;
         } data;
