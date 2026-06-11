@@ -5,28 +5,11 @@
 #include "host/networking/tcp_server.hpp"
 #include "host/logging/logger.hpp"
 
+#include "host/endpoints/train_status_endpoint.hpp"
+#include "host/endpoints/motor_endpoint.hpp"
+
 #include "common/messages/handshake.hpp"
 #include "common/messages/motor.hpp"
-
-void send_tcp_response(httplib::Response& res, host::tcp_status_t status) {
-    switch (status) {
-        case host::tcp_status_t::success:
-            res.status = 200;
-            res.set_content(
-                R"({"status":"applied"})",
-                "application/json"
-            );
-            break;
-
-        default:
-            res.status = 500;
-            res.set_content(
-                R"({"error":"tcp error"})",
-                "application/json"
-            );
-            break;
-    }
-}
 
 int main() {
     host::logger_t::init();
@@ -35,59 +18,33 @@ int main() {
     httplib::Server http_server;
 
     host::handshake_manager_t handshake(tcp_server, std::chrono::seconds(1));
+    host::train_status_storage_t train_storage;
 
     tcp_server.register_on_connect([&](common::esp_id_t id) {
         handshake.on_connect(id);
+        train_storage.add_train(id);
     });
 
     tcp_server.register_on_disconnect([&](common::esp_id_t id) {
         LOG_INFO("ESP: {} disconnected", id);
+
+        train_storage.remove_train(id);
     });
 
+    // setup tcp callbacks
     tcp_server.register_receive_callback<common::esp_init_response_t>([&](const common::esp_init_response_t& res) {
         handshake.on_response_received(res);
     });
 
-    tcp_server.start();
-    
-
-    http_server.Post("/api/motor_control", [&](const httplib::Request& req, httplib::Response& res) {
-        try {
-            const auto body = nlohmann::json::parse(req.body);
-
-            const auto esp_id        = body.at("esp_id").get<common::esp_id_t>();
-            const auto is_active     = body.at("is_active").get<bool>();
-            const auto starting_duty = body.at("starting_duty").get<uint32_t>();
-            const auto target_duty   = body.at("target_duty").get<uint32_t>();
-            const auto ramp_time_ms  = body.at("ramp_time_ms").get<uint16_t>();
-
-            /*
-            {
-                "esp_id": 0,
-                "is_active": false,
-                "starting_duty": 750,
-                "target_duty": 1023,
-                "ramp_time_ms": 7500
-            }
-            */
-
-            host::tcp_status_t status = tcp_server.send_to_client(esp_id, common::motor_control_t {
-                .starting_duty = starting_duty,
-                .target_duty = target_duty,
-                .ramp_time_ms = ramp_time_ms,
-                .is_active = is_active
-            });
-
-            send_tcp_response(res, status);
-        }
-        catch (const std::exception& e) {
-            res.status = 400;
-            res.set_content(
-                R"({"error":"invalid json payload"})",
-                "application/json"
-            );
-        }
+    tcp_server.register_receive_callback<common::motor_status_t>([&](const common::motor_status_t& motor) {
+        train_storage.update_motor_status(motor);
     });
 
-    http_server.listen("0.0.0.0", 8000);
+    // setup http endpoints
+    host::train_status_endpoint_t::init(train_storage, http_server, "/api/train_status");
+    host::motor_endpoint_t::init(tcp_server, http_server, "/api/motor_control");
+
+    // start communication
+    tcp_server.start();
+    http_server.listen("0.0.0.0", 8000); // blocks thread
 }

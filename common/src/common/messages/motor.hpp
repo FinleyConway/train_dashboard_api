@@ -38,10 +38,12 @@ namespace common {
     };
 
     struct motor_status_t {
+        common::esp_id_t id;
         uint32_t current_duty;
         uint8_t is_active;
 
         static void serialise(std::span<uint8_t>& payload, const motor_status_t& data) {
+            serialise_t::write(payload, data.id);
             serialise_t::write(payload, data.current_duty);
             serialise_t::write(payload, data.is_active);
         }
@@ -49,6 +51,7 @@ namespace common {
         static motor_status_t deserialise(std::span<uint8_t> payload) {
             motor_status_t result;
 
+            result.id = serialise_t::read<common::esp_id_t>(payload);
             result.current_duty = serialise_t::read<uint32_t>(payload);
             result.is_active = serialise_t::read<uint8_t>(payload);
 
@@ -57,6 +60,7 @@ namespace common {
 
         static constexpr size_t payload_size() {
             return serialise_t::message_size<
+                common::esp_id_t,
                 uint32_t, 
                 uint8_t
             >();
