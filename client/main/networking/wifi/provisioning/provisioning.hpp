@@ -60,7 +60,9 @@ namespace client {
         }
 
     private:
-        esp_err_t start_softap(const char* ssid, const char* password, uint8_t max_connections);
+        esp_err_t start_softap(const char* ap_ssid, const char* ap_password, uint8_t max_connections);
+
+        esp_err_t create_unique_ap_ssid(const char* ap_ssid, char ap_ssid_buffer[32]);
 
         esp_err_t try_station_connect(const char* ssid, const char* password);
 
