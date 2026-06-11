@@ -6,7 +6,7 @@
 #include "host/logging/logger.hpp"
 
 #include "common/messages/handshake.hpp"
-#include "common/messages/motor_control.hpp"
+#include "common/messages/motor.hpp"
 
 void send_tcp_response(httplib::Response& res, host::tcp_status_t status) {
     switch (status) {
@@ -30,7 +30,10 @@ void send_tcp_response(httplib::Response& res, host::tcp_status_t status) {
 
 int main() {
     host::logger_t::init();
+
     host::tcp_server_t tcp_server;
+    httplib::Server http_server;
+
     host::handshake_manager_t handshake(tcp_server, std::chrono::seconds(1));
 
     tcp_server.register_on_connect([&](common::esp_id_t id) {
@@ -47,7 +50,6 @@ int main() {
 
     tcp_server.start();
     
-    httplib::Server http_server;
 
     http_server.Post("/api/motor_control", [&](const httplib::Request& req, httplib::Response& res) {
         try {
@@ -87,5 +89,5 @@ int main() {
         }
     });
 
-    http_server.listen("0.0.0.0", 8081);
+    http_server.listen("0.0.0.0", 8000);
 }

@@ -24,9 +24,12 @@ add_subdirectory(common)
 add_subdirectory(host)
 add_subdirectory(tests)
 
+message(STATUS "Scripts source: ${CMAKE_SOURCE_DIR}/scripts")
+
 # copy scripts
 add_custom_target(copy_scripts ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/scripts
         ${CMAKE_BINARY_DIR}/${BINARY_FOLDER}/scripts
 )
+add_dependencies(host copy_scripts)

@@ -2,7 +2,7 @@
 
 #include <freertos/FreeRTOS.h>
 
-#include "common/messages/motor_control.hpp"
+#include "common/messages/motor.hpp"
 #include "task_events/tcp_send_event.hpp"
 #include "task_events/motor_command.hpp"
 #include "networking/tcp_client.hpp"

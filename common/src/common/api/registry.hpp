@@ -3,7 +3,7 @@
 #include "common/core/packet_registry.hpp"
 
 #include "common/messages/handshake.hpp"
-#include "common/messages/motor_control.hpp"
+#include "common/messages/motor.hpp"
 
 namespace common {
     using registry_t = packet_registry_impl_t<

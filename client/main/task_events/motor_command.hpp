@@ -2,7 +2,7 @@
 
 #include <freertos/FreeRTOS.h>
 
-#include "common/messages/motor_control.hpp"
+#include "common/messages/motor.hpp"
 
 namespace client {
     class motor_command_t {
