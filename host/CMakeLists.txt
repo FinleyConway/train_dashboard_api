@@ -9,6 +9,7 @@ add_library(host_lib
     src/host/networking/tcp_server.cpp
     
     src/host/utils/handshake_manager.cpp
+    src/host/application.cpp
 )
 
 target_include_directories(host_lib PUBLIC

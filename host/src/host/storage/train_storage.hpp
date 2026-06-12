@@ -8,19 +8,19 @@
 #include "common/messages/motor.hpp"
 
 namespace host {
-    struct train_storage_t {
+    struct storage_t {
         uint32_t current_motor_duty = 0;
         bool is_motor_active = false;
     };
 
-    inline void to_json(nlohmann::json& j, const train_storage_t& e) {
+    inline void to_json(nlohmann::json& j, const storage_t & e) {
         j = {
             {"current_motor_duty", e.current_motor_duty},
             {"is_motor_active", e.is_motor_active}
         };
     }
 
-    class train_status_storage_t {
+    class train_storage_t {
     public:
         void add_train(common::esp_id_t id) {
             m_data.try_emplace(id);
@@ -58,7 +58,7 @@ namespace host {
         }
 
     private:
-        nlohmann::json create_storage_json(common::esp_id_t id, const train_storage_t& storage) {
+        nlohmann::json create_storage_json(common::esp_id_t id, const storage_t& storage) {
             nlohmann::json json;
 
             json["train_id"] = id;
@@ -78,6 +78,6 @@ namespace host {
         } 
 
     private:
-        std::unordered_map<common::esp_id_t, train_storage_t> m_data;
+        std::unordered_map<common::esp_id_t, storage_t> m_data;
     };
 }

@@ -3,17 +3,16 @@
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
+#include "host/storage/train_storage.hpp"
 #include "host/networking/tcp_server.hpp"
 #include "host/utils/http_utils.hpp"
-
-#include "host/train_status_storage.hpp"
 
 #include "common/api/types.hpp"
 
 namespace host {
     class train_status_endpoint_t {
     public:
-        static void init(train_status_storage_t& storage, httplib::Server& http_server, const std::string& endpoint_uri) {
+        static void init(train_storage_t& storage, httplib::Server& http_server, const std::string& endpoint_uri) {
              http_server.Get(endpoint_uri, [&](const httplib::Request& req, httplib::Response& res) {
                 get_all_status(storage, req, res);
             });
@@ -24,7 +23,7 @@ namespace host {
         }
 
     private:
-        static void get_status(train_status_storage_t& storage, const httplib::Request& req, httplib::Response& res) {
+        static void get_status(train_storage_t& storage, const httplib::Request& req, httplib::Response& res) {
             try {
                 std::string id_params = req.path_params.at("train_id");
                 auto train_id = http_utils_t::to_integer<common::esp_id_t>(id_params);
@@ -41,7 +40,7 @@ namespace host {
             }
         }
 
-        static void get_all_status(train_status_storage_t& storage, const httplib::Request& req, httplib::Response& res) {
+        static void get_all_status(train_storage_t& storage, const httplib::Request& req, httplib::Response& res) {
            auto json = storage.get_all_train_json();
 
             res.set_content(json.dump(), "application/json");
