@@ -4,8 +4,8 @@
 
 #include <asio.hpp>
 
-#include "host/networking/tcp_callbacks.hpp"
-#include "host/networking/tcp_io_state.hpp"
+#include "host/networking/tcp/tcp_callbacks.hpp"
+#include "host/networking/tcp/tcp_io_state.hpp"
 
 #include "common/api/registry.hpp"
 #include "common/api/types.hpp"

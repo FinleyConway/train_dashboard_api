@@ -1,4 +1,4 @@
-#include "host/networking/tcp_server.hpp"
+#include "host/networking/tcp/tcp_server.hpp"
 
 #include "host/logging/logger.hpp"
 
@@ -7,7 +7,11 @@
 namespace host {
     tcp_server_t::tcp_server_t() : 
         m_acceptor(m_io_context),
-        m_endpoint(ip::tcp::endpoint(ip::tcp::v4(), std::atoi(common::service_config_t::port))),
+        m_endpoint(ip::tcp::endpoint(
+            ip::tcp::v4(), 
+            std::atoi(common::service_config_t::tcp_port)
+        )),
+
         m_work_guard(asio::make_work_guard(m_io_context))
     {
     }
@@ -22,11 +26,7 @@ namespace host {
 
     void tcp_server_t::start() {
         m_io_thread = std::thread([this] {
-            m_mdns_service.start(
-                common::service_config_t::hostname, 
-                common::service_config_t::port
-            );
-
+            m_mdns_service.start(common::service_config_t::services);
             m_io_context.run();
         });
     }

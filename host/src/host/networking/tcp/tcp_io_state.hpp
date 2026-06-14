@@ -7,7 +7,7 @@
 
 #include <asio.hpp>
 
-#include "host/networking/tcp_callbacks.hpp"
+#include "host/networking/tcp/tcp_callbacks.hpp"
 
 #include "common/api/registry.hpp"
 #include "common/api/types.hpp"

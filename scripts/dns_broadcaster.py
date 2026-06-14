@@ -4,29 +4,45 @@ import sys
 import time
 import signal
 import socket
+from dataclasses import dataclass
 from zeroconf import ServiceInfo, Zeroconf
 
+
+@dataclass
+class service:
+    service_type: str
+    hostname: str
+    port: str
+
+
 class dns_broadcaster:
-    def __init__(self, hostname, port):
+    def __init__(self, services):
+        self._zeroconf = Zeroconf()
+        self._services = []
         ip = self._get_ip()
 
-        self._service = ServiceInfo(
-            "_mytcp._tcp.local.",
-            f"{hostname.replace(".local", "")}._mytcp._tcp.local.",
-            addresses=[socket.inet_aton(ip)],
-            port=int(port),
-            server=f"{hostname}."
-        )
+        for svc in services:
+            service_type = svc.service_type
+            hostname = svc.hostname.replace(".local", "")
+            port = int(svc.port)
 
-        self._zeroconf = Zeroconf()
+            info = ServiceInfo(
+                type_=f"_{service_type}._tcp.local.",
+                name=f"{hostname}._{service_type}._tcp.local.",
+                addresses=[socket.inet_aton(ip)],
+                port=port,
+                server=f"{hostname}.local."
+            )
+
+            self._services.append(info)
 
         signal.signal(signal.SIGINT, self._shutdown)
         signal.signal(signal.SIGTERM, self._shutdown)
 
     def run(self):
-        # broadcast "{name}.local" as server ip
-        self._zeroconf.unregister_all_services()
-        self._zeroconf.register_service(self._service)
+        # broadcast "{name}.local" as ip
+        for service in self._services:
+            self._zeroconf.register_service(service)
         
         # make the program sleep
         while True:
@@ -34,7 +50,9 @@ class dns_broadcaster:
 
     def _shutdown(self, signum, frame):
         # clean up when signals were called
-        self._zeroconf.unregister_service(self._service)
+        for service in self._services:
+            self._zeroconf.unregister_service(service)
+
         self._zeroconf.close()
         sys.exit(0)
 
@@ -49,10 +67,21 @@ class dns_broadcaster:
 
 
 def main():
-    hostname = sys.argv[1]
-    port = sys.argv[2]
+    args = sys.argv[1:]
 
-    dns = dns_broadcaster(hostname, port)
+    if len(args) % 3 != 0:
+        raise ValueError("Expected triplets: service_type hostname port")
+
+    services = [
+        service(
+            service_type = args[i],
+            hostname = args[i + 1],
+            port = args[i + 2]
+        )
+        for i in range(0, len(args), 3)
+    ]
+
+    dns = dns_broadcaster(services)
     dns.run()
 
 if __name__ == "__main__":

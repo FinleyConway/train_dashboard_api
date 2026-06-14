@@ -3,8 +3,8 @@
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
-#include "host/networking/tcp_server.hpp"
-#include "host/utils/http_utils.hpp"
+#include "host/networking/tcp/tcp_server.hpp"
+#include "host/protocol/http_utils.hpp"
 
 #include "common/api/types.hpp"
 

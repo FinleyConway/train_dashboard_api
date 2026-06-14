@@ -4,11 +4,12 @@ project(host LANGUAGES CXX)
 add_library(host_lib
     src/host/logging/logger.cpp
 
-    src/host/networking/tcp_connection.cpp
-    src/host/networking/tcp_io_state.cpp
-    src/host/networking/tcp_server.cpp
+    src/host/networking/tcp/tcp_connection.cpp
+    src/host/networking/tcp/tcp_io_state.cpp
+    src/host/networking/tcp/tcp_server.cpp
     
-    src/host/utils/handshake_manager.cpp
+    src/host/protocol/handshake_manager.cpp
+
     src/host/application.cpp
 )
 

@@ -4,7 +4,7 @@
 
 #include <httplib.h>
 
-#include "host/networking/tcp_server.hpp"
+#include "host/networking/tcp/tcp_server.hpp"
 
 namespace host {
     class http_utils_t {

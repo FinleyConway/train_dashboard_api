@@ -18,8 +18,8 @@ namespace client {
         hints.ai_protocol = IPPROTO_IP;
         addrinfo* res = nullptr;
 
-        constexpr const char* host = common::service_config_t::hostname;
-        constexpr const char* port = common::service_config_t::port;
+        constexpr const char* host = common::service_config_t::tcp_hostname;
+        constexpr const char* port = common::service_config_t::tcp_port;
 
         // try to get the address from mdns name
         if (getaddrinfo(host, port, &hints, &res) == 0) {

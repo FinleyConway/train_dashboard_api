@@ -2,8 +2,8 @@
 
 #include <httplib.h>
 
-#include "host/utils/handshake_manager.hpp"
-#include "host/networking/tcp_server.hpp"
+#include "host/protocol/handshake_manager.hpp"
+#include "host/networking/tcp/tcp_server.hpp"
 #include "host/storage/train_storage.hpp"
 
 namespace host {
