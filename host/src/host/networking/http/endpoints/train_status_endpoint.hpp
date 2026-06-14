@@ -5,7 +5,7 @@
 
 #include "host/storage/train_storage.hpp"
 #include "host/networking/tcp/tcp_server.hpp"
-#include "host/protocol/http_utils.hpp"
+#include "host/networking/http/http_utils.hpp"
 
 #include "common/api/types.hpp"
 

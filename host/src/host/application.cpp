@@ -2,8 +2,8 @@
 
 #include "host/logging/logger.hpp"
 
-#include "host/endpoints/train_status_endpoint.hpp"
-#include "host/endpoints/motor_endpoint.hpp"
+#include "host/networking/http/endpoints/train_status_endpoint.hpp"
+#include "host/networking/http/endpoints/motor_endpoint.hpp"
 
 #include "common/messages/handshake.hpp"
 #include "common/messages/motor.hpp"
