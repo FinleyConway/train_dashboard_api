@@ -1,5 +1,5 @@
-#include "host/utils/handshake_manager.hpp"
-#include "host/networking/tcp_server.hpp"
+#include "host/networking/tcp/tcp_server.hpp"
+#include "host/protocol/handshake_manager.hpp"
 #include "host/logging/logger.hpp"
 
 #include "common/messages/handshake.hpp"

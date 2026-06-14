@@ -1,4 +1,4 @@
-#include "host/utils/handshake_manager.hpp"
+#include "host/protocol/handshake_manager.hpp"
 
 #include "host/logging/logger.hpp"
 

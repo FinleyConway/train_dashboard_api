@@ -1,4 +1,4 @@
-#include "host/networking/tcp_connection.hpp"
+#include "host/networking/tcp/tcp_connection.hpp"
 
 namespace host {
     tcp_connection_t::pointer_t tcp_connection_t::create(asio::io_context& io_context) {

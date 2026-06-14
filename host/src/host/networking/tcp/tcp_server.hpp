@@ -9,9 +9,10 @@
 
 #include <asio.hpp>
 
-#include "host/networking/mdns_service.hpp"
-#include "host/networking/tcp_callbacks.hpp"
-#include "host/networking/tcp_connection.hpp"
+#include "host/networking/tcp/tcp_callbacks.hpp"
+#include "host/networking/tcp/tcp_connection.hpp"
+
+#include "host/protocol/mdns_service.hpp"
 
 #include "common/api/types.hpp"
 #include "common/api/registry.hpp"
