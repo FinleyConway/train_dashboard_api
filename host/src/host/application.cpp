@@ -2,7 +2,7 @@
 
 #include "host/logging/logger.hpp"
 
-#include "host/networking/http/endpoints/train_status_endpoint.hpp"
+#include "host/networking/http/endpoints/train_endpoint.hpp"
 #include "host/networking/http/endpoints/motor_endpoint.hpp"
 
 #include "common/messages/handshake.hpp"
@@ -32,8 +32,6 @@ namespace host {
         });
 
         m_tcp_server.register_on_disconnect([&](common::esp_id_t id) {
-            LOG_INFO("ESP: {} disconnected", id);
-
             m_train_storage.remove_train(id);
         });
 
@@ -51,10 +49,11 @@ namespace host {
     }
 
     void application_t::register_endpoints() {
-        train_status_endpoint_t::init(
+        train_endpoint_t::init(
+            m_tcp_server,
             m_train_storage,
             m_http_server,
-            "/api/train_status"
+            "/api/train"
         );
 
         motor_endpoint_t::init(

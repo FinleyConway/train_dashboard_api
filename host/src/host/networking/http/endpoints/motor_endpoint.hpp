@@ -22,7 +22,7 @@ namespace host {
             try {
                 const auto body = nlohmann::json::parse(req.body);
 
-                const auto esp_id        = body.at("esp_id").get<common::esp_id_t>();
+                const auto train_id        = body.at("train_id").get<common::esp_id_t>();
                 const auto is_active     = body.at("is_active").get<bool>();
                 const auto starting_duty = body.at("starting_duty").get<uint32_t>();
                 const auto target_duty   = body.at("target_duty").get<uint32_t>();
@@ -30,7 +30,7 @@ namespace host {
 
                 /*
                 {
-                    "esp_id": 0,
+                    "train_id": 0,
                     "is_active": false,
                     "starting_duty": 750,
                     "target_duty": 1023,
@@ -38,7 +38,7 @@ namespace host {
                 }
                 */
 
-                host::tcp_status_t status = tcp_server.send_to_client(esp_id, common::motor_control_t {
+                tcp_status_t status = tcp_server.send_to_client(train_id, common::motor_control_t {
                     .starting_duty = starting_duty,
                     .target_duty = target_duty,
                     .ramp_time_ms = ramp_time_ms,
@@ -46,13 +46,11 @@ namespace host {
                 });
 
                 http_utils_t::send(res, status);
+
+                LOG_INFO("Sending motor request for train {}", train_id);
             }
-            catch (const std::exception& e) {
-                res.status = 400;
-                res.set_content(
-                    R"({"error":"invalid json payload"})",
-                    "application/json"
-                );
+            catch (...) {
+                http_utils_t::bad_request(res, "invalid json payload");
             }
         }
     };

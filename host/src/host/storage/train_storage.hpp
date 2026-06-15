@@ -26,8 +26,16 @@ namespace host {
             m_data.try_emplace(id);
         }
 
+        bool has_train(common::esp_id_t id) const {
+            return m_data.contains(id);
+        }
+
         void remove_train(common::esp_id_t id) {
             m_data.erase(id);
+        }
+
+        bool empty() const {
+
         }
 
         void update_motor_status(const common::motor_status_t& motor) {
@@ -40,26 +48,28 @@ namespace host {
             storage.is_motor_active = motor.is_active;
         }
 
-        nlohmann::json get_train_json(common::esp_id_t id) {
+        nlohmann::json get_train_json(common::esp_id_t id) const {
             auto it = m_data.find(id);
-            if (it == m_data.end()) return nlohmann::json();
+            if (it == m_data.end()) return nlohmann::json::object();
 
             return create_storage_json(id, it->second);
         }
 
-        nlohmann::json get_all_train_json() {
-            nlohmann::json json;
+        nlohmann::json get_all_train_json() const {
+            nlohmann::json json = nlohmann::json::object();
+            
+            json["trains"] = nlohmann::json::array();
 
             for (const auto& [id, storage] : m_data) {
-                json.emplace_back(create_storage_json(id, storage));
+                json["trains"].emplace_back(create_storage_json(id, storage));
             }
 
             return json;
         }
 
     private:
-        nlohmann::json create_storage_json(common::esp_id_t id, const storage_t& storage) {
-            nlohmann::json json;
+        nlohmann::json create_storage_json(common::esp_id_t id, const storage_t& storage) const {
+            nlohmann::json json = nlohmann::json::object();;
 
             json["train_id"] = id;
             json["train_status"] = storage;

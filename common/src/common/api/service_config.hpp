@@ -18,7 +18,7 @@ namespace common {
         // each service_type name must be unique!
         static constexpr std::array services {
             service_entry_t("esp-tcp", "esp_server.local", "8080"),
-            service_entry_t("http", "esp_api.local", "8000"),
+            service_entry_t("http", "esp-api.local", "8000"),
         };
 
         // for tcp server/client to easily get

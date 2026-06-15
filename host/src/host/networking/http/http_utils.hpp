@@ -10,9 +10,9 @@
 namespace host {
     class http_utils_t {
     public:
-        static void send(httplib::Response& res, host::tcp_status_t status) {
+        static void send(httplib::Response& res, tcp_status_t status) {
             switch (status) {
-                case host::tcp_status_t::success:
+                case tcp_status_t::success:
                     res.status = 200;
                     res.set_content(
                         R"({"status":"applied"})",
@@ -20,7 +20,7 @@ namespace host {
                     );
                     break;
 
-                case host::tcp_status_t::already_accepting:
+                case tcp_status_t::already_accepting:
                     res.status = 304;
                     res.set_content(
                         R"({"status":"already accepting"})",
@@ -28,7 +28,7 @@ namespace host {
                     );
                     break;
 
-                case host::tcp_status_t::fail_to_accept:
+                case tcp_status_t::fail_to_accept:
                     res.status = 500;
                     res.set_content(
                         R"({"status":"fail to accept"})",
@@ -36,7 +36,7 @@ namespace host {
                     );
                     break;
 
-                case host::tcp_status_t::unknown_client:
+                case tcp_status_t::unknown_client:
                     res.status = 404;
                     res.set_content(
                         R"({"status":"unknown client"})",
@@ -44,7 +44,7 @@ namespace host {
                     );
                     break;
 
-                case host::tcp_status_t::no_client_connection:
+                case tcp_status_t::no_client_connection:
                     res.status = 410;
                     res.set_content(
                         R"({"status":"client not connect"})",
@@ -62,6 +62,23 @@ namespace host {
             }
         } 
 
+        static void bad_request(httplib::Response& res, std::string_view error) {
+            LOG_WARN("Received bad HTTP request: {}", error);
+
+            res.status = 400;
+
+            nlohmann::json json;
+            json["error"] = error;
+
+            res.set_content(json.dump(), "application/json");
+        }
+
+        template<typename T>
+        static T get_path_param(const httplib::Request& req, const std::string& name) {
+            return to_integer<T>(req.path_params.at(name));
+        }
+
+    private:
         template<typename T>
         static T to_integer(std::string_view s) {
             static_assert(std::is_integral_v<T>);
