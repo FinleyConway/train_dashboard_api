@@ -15,18 +15,32 @@
 namespace host {
     namespace ip = asio::ip;
 
+    /// @brief Handles to sending and receiving to/from the client
     class tcp_io_state_t {
     public:
-        tcp_io_state_t(ip::tcp::socket& io_context);
+        /// @brief Construct tcp_io_state_t
+        /// @param socket The client socket
+        tcp_io_state_t(ip::tcp::socket& socket);
 
+        /// @brief Initialise the client with context properties
+        /// @param id The client id
+        /// @param registry The tcp messaging system
+        /// @param callback The callback for when this client disconnects
         void set_spec(common::esp_id_t id, common::registry_t& registry, on_disconnect_fn&& callback);
 
+        /// @brief Allow to send a message to the client
+        /// @param payload The message byte stream
+        /// @param bytes The size of the message byte stream
+        /// @return Has the message been sent
         bool send(common::payload_t&& payload, size_t bytes);
 
+        /// @brief Start receiving messages from client
         void start_receiving();
 
+        /// @brief Stop receiving messages from client
         void stop_receiving();
 
+        /// @brief Stop all form of sending and receiving
         void stop_io();
 
     private:

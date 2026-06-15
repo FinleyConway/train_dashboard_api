@@ -4,7 +4,7 @@
 #include "host/logging/assert.hpp"
 
 namespace host {
-    tcp_io_state_t::tcp_io_state_t(ip::tcp::socket& io_context) : m_socket(io_context) {}
+    tcp_io_state_t::tcp_io_state_t(ip::tcp::socket& socket) : m_socket(socket) {}
 
     void tcp_io_state_t::set_spec(common::esp_id_t id, common::registry_t& registry, on_disconnect_fn&& callback) {
         m_id = id;

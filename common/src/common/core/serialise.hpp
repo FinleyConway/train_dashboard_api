@@ -17,8 +17,13 @@ namespace common {
     template<typename T>
     concept primitive_type = std::is_trivially_copyable_v<T> && !std::is_pointer_v<T>;
 
+    /// @brief Serialisation util to convert types into a stream of bytes
     class serialise_t {
     public:
+        /// @brief Convert a primitive type
+        /// @tparam T A primitive type
+        /// @param payload A message payload
+        /// @param primitive The data to convert
         template<primitive_type T>
         static void write(std::span<uint8_t>& payload, T primitive) {
             assert(payload.size() >= sizeof(T));
@@ -30,6 +35,11 @@ namespace common {
             payload = payload.subspan(sizeof(T)); // offset payload
         }
 
+        /// @brief Convert a primitive contiguous type
+        /// @tparam T A primitive type
+        /// @tparam N The size of the contiguous array
+        /// @param payload A message payload
+        /// @param arr The data to convert
         template<typename T, size_t N>
         static void write(std::span<uint8_t>& payload, const std::array<T, N>& arr) {
             for (const auto& v : arr) {
@@ -37,6 +47,10 @@ namespace common {
             }
         }
 
+        /// @brief Read a primitive type from a stream of bytes
+        /// @tparam T The expected primitive type
+        /// @param payload The message payload
+        /// @return The expected primitive type data
         template<primitive_type T>
         static T read(std::span<uint8_t>& payload) {
             assert(payload.size() >= sizeof(T));
@@ -52,6 +66,11 @@ namespace common {
             return primitive;
         }
 
+        /// @brief Read a primitive contiguous type stream of bytes
+        /// @tparam T The expected primitive type
+        /// @tparam N The size of the contiguous array
+        /// @param payload A message payload
+        /// @return The expected contiguous primitive type data
         template<typename T, size_t N>
         static std::array<T, N> read(std::span<uint8_t>& payload) {
             std::array<T, N> arr;
@@ -63,6 +82,9 @@ namespace common {
             return arr;
         }
 
+        /// @brief Get the message size
+        /// @tparam ...Ts A series of types used in a message
+        /// @return The message size
         template <typename... Ts>
         static constexpr size_t message_size() {
             return (sizeof(Ts) + ...);

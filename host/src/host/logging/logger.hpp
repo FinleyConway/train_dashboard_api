@@ -6,8 +6,10 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace host {
+    /// @brief The logging system to provide meaningful logs to the terminal
     class logger_t {
     public:
+        /// @brief Enable logging
         static void init();
 
         static std::shared_ptr<spdlog::logger>& get_logger();
