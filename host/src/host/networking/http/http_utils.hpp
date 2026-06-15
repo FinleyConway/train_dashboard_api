@@ -1,6 +1,7 @@
 #pragma once
 
 #include <charconv>
+#include <string_view>
 
 #include <httplib.h>
 
@@ -15,6 +16,38 @@ namespace host {
                     res.status = 200;
                     res.set_content(
                         R"({"status":"applied"})",
+                        "application/json"
+                    );
+                    break;
+
+                case host::tcp_status_t::already_accepting:
+                    res.status = 304;
+                    res.set_content(
+                        R"({"status":"already accepting"})",
+                        "application/json"
+                    );
+                    break;
+
+                case host::tcp_status_t::fail_to_accept:
+                    res.status = 500;
+                    res.set_content(
+                        R"({"status":"fail to accept"})",
+                        "application/json"
+                    );
+                    break;
+
+                case host::tcp_status_t::unknown_client:
+                    res.status = 404;
+                    res.set_content(
+                        R"({"status":"unknown client"})",
+                        "application/json"
+                    );
+                    break;
+
+                case host::tcp_status_t::no_client_connection:
+                    res.status = 410;
+                    res.set_content(
+                        R"({"status":"client not connect"})",
                         "application/json"
                     );
                     break;
