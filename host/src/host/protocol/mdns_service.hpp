@@ -9,8 +9,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "common/api/service_config.hpp"
-
 // https://linuxvox.com/blog/using-exec-to-execute-a-system-command-in-a-new-process/
 
 // Linux only atm

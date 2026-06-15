@@ -3,7 +3,7 @@
 #include "host/logging/logger.hpp"
 
 namespace host {
-    handshake_manager_t::handshake_manager_t(tcp_server_t& tcp_server, const std::chrono::seconds& timeout) 
+    handshake_manager_t::handshake_manager_t(tcp_server_t& tcp_server, const std::chrono::milliseconds& timeout) 
         : m_tcp_server(tcp_server), m_timeout(timeout) 
     {
     }

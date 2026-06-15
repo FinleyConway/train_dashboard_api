@@ -16,7 +16,7 @@ namespace host {
         /// @brief Construct handshake_manager_t
         /// @param tcp_server A mutable reference to the tcp_server
         /// @param timeout How long before disconnecting
-        handshake_manager_t(tcp_server_t& tcp_server, const std::chrono::seconds& timeout);
+        handshake_manager_t(tcp_server_t& tcp_server, const std::chrono::milliseconds& timeout);
 
         /// @brief Handle the connected client
         /// @param id The client id
@@ -29,6 +29,6 @@ namespace host {
     private:
         tcp_server_t& m_tcp_server;
         std::unordered_map<common::esp_id_t, asio::steady_timer> m_session;
-        std::chrono::seconds m_timeout;
+        std::chrono::milliseconds m_timeout;
     };
 } 
