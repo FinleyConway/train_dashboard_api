@@ -17,6 +17,8 @@ namespace common {
         { T::payload_size() } -> std::same_as<size_t>;
     };
 
+    /// @brief A compile-time messaging lookup
+    /// @tparam ...Ts A series of messages
     template<typename... Ts>
     class packet_registry_impl_t {
     private:
@@ -46,16 +48,23 @@ namespace common {
             return type_index_impl<T, Ts...>();
         }
 
-    public:
-        using packet_id_t = uint16_t;
-        using payload_t = std::array<uint8_t, max_payload()>;
-
         struct callback_info_t {
             void (*invoke)(std::span<uint8_t>) = nullptr;
             size_t size = 0;
         };
 
     public:
+        /// @brief The message id
+        using packet_id_t = uint16_t;
+
+        /// @brief The message payload
+        using payload_t = std::array<uint8_t, max_payload()>;
+
+    public:
+        /// @brief Create a message payload
+        /// @tparam T A registered message type
+        /// @param data The data to convert into a payload
+        /// @return The payload
         template<typename T>
         payload_t create(const T& data) const {
             static_assert(contains<T>(), "T must be in Ts...");
@@ -75,6 +84,11 @@ namespace common {
             return payload;
         }
 
+        /// @brief Call the assigned message callback
+        /// @param id The message id
+        /// @param payload The message payload received
+        /// @param bytes The size of the received message
+        /// @return Was the callback called
         bool dispatch(packet_id_t id, payload_t&& payload, size_t bytes) const {
             if (id >= m_callback.size()) return false;
 
@@ -92,6 +106,9 @@ namespace common {
             return true;
         }
 
+        /// @brief Register a callback for when receiving a message
+        /// @tparam T The registered message type
+        /// @tparam Fn The callback, void(const T&)
         template<typename T, auto Fn>
         void register_callback() {
             static_assert(contains<T>(), "T must be registered in common!");
@@ -105,11 +122,17 @@ namespace common {
             };
         }
 
+        /// @brief Get the message size from the message id
+        /// @param id The message id
+        /// @return A potential size
         std::optional<size_t> expected_payload_size(packet_id_t id) const {
             if (id >= m_callback.size()) return std::nullopt;
             return std::make_optional(m_callback[id].size);
         }
         
+        /// @brief  Get the message size from the message type
+        /// @tparam T The message type
+        /// @return The size
         template<typename T>
         constexpr size_t packet_size() {
             return sizeof(packet_id_t) + T::payload_size();

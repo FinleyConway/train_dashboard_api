@@ -25,6 +25,8 @@ namespace host {
     }
 
     void tcp_server_t::start() {
+        LOG_INFO("Starting TCP server and mDNS services");
+
         m_io_thread = std::thread([this] {
             m_mdns_service.start(common::service_config_t::services);
             m_io_context.run();

@@ -20,29 +20,52 @@
 namespace host {
     namespace ip = asio::ip;
 
+    /// @enum tcp_status_t
+    /// @brief The return context of the called function
     enum class tcp_status_t {
-        success,
-        already_accepting,
-        fail_to_accept,
-        unknown_client,
-        no_client_connection
+        success,                ///< Operation succeeded
+        already_accepting,      ///< Already in requested accepting state
+        fail_to_accept,         ///< Failed to bind/listen socket
+        unknown_client,         ///< Unknown client id
+        no_client_connection    ///< Client no longer connected
     };
 
+    /// @brief The tcp server that handles the i/o of messages between the host and clients
     class tcp_server_t {
     public:
+        /// @brief Construct tcp_server_t
         tcp_server_t();
+
+        /// @brief Destroy tcp_server_t
         ~tcp_server_t();
 
+        /// @brief Get the server io context
+        /// @return The server handle
         asio::io_context& get_io_context();
-
+        
+        /// @brief Start the server and start broadcasting all registered mDNS services
         void start();
 
+        /// @brief Check if the server is running
+        /// @return Is the server running
         bool is_running() const;
 
         void shutdown();
 
+        /// @brief Start or stop accepting messages from all connected clients
+        /// @param enable Stop or start accepting
+        /// @retval tcp_status_t::success: Operation succeeded
+        /// @retval tcp_status_t::already_accepting: Already in requested state
+        /// @retval tcp_status_t::fail_to_bind: Failed to bind or listen
         tcp_status_t toggle_accepting(bool enable);
 
+        /// @brief Send a message to a client
+        /// @tparam T A registered message type 
+        /// @param client_id The client id
+        /// @param data A registered message type data
+        /// @retval tcp_status_t::success: Operation succeeded
+        /// @retval tcp_status_t::unknown_client: Unknown client id
+        /// @retval tcp_status_t::no_client_connection: Client no longer connected
         template<typename T>
         tcp_status_t send_to_client(common::esp_id_t client_id, const T& data) {
             std::lock_guard lock(m_connection_mutex);
@@ -62,18 +85,32 @@ namespace host {
             return tcp_status_t::success;
         }
 
+        /// @brief Allow to stop or start receiving messages from this client
+        /// @param enable The toggle state
         void receive_from_client(bool enable);
 
+        /// @brief Disconnect client
+        /// @param client_id The client id
+        /// @retval tcp_status_t::success: Operation succeeded
+        /// @retval tcp_status_t::unknown_client: Unknown client id
+        /// @retval tcp_status_t::no_client_connection: Client no longer connected
         tcp_status_t disconnect_client(common::esp_id_t client_id);
 
+        /// @brief Provide the callback for registered T
+        /// @tparam T A registered message type 
+        /// @param fn The callback when receiving a message, void(const T&)
         template<typename T, typename Fn>
         void register_receive_callback(Fn&& fn) {
             callback_holder_t<T>::fn = std::forward<Fn>(fn);
             m_registry.template register_callback<T, callback_holder_t<T>::trampoline>();
         }
 
+        /// @brief Provide the callback for when a client connects
+        /// @param callback The connect callback, void(common::esp_id_t)
         void register_on_connect(on_connect_fn&& callback);
 
+        /// @brief Provide the callback for when a client disconnects
+        /// @param callback The disconnect callback, void(common::esp_id_t)
         void register_on_disconnect(on_disconnect_fn&& callback);
 
     private:
