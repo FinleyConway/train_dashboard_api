@@ -98,22 +98,33 @@ A [train dashboard API](https://github.com/FinleyConway/train_dashboard_api) tha
 // typical message boilerplate
 namespace common {
     struct temperature_t {
+         // must be fixed-sized primitive or contiguous primitive type
+        float smelliness;
         int8_t value;
+        std::array<int8_t, 64> message;
 
         static void serialise(std::span<uint8_t>& payload, const temperature_t& data) {
+            serialise_t::write(payload, data.smelliness);
             serialise_t::write(payload, data.value);
+            serialise_t::write(payload, data.message);
         }
 
         static temperature_t deserialise(std::span<uint8_t> payload) {
             temperature_t result;
 
-            result.value = serialise_t::read<int8_t>(payload); 
+            result.smelliness = serialise_t::read<float>(payload);
+            result.value = serialise_t::read<int8_t>(payload);
+            result.message = serialise_t::read<int8_t, 64>(payload);
 
             return result;
         }
 
         static constexpr size_t payload_size() {
-            return serialise_t::message_size<int8_t>();
+            return serialise_t::message_size<
+                float,
+                int8_t,
+                std::array<int8_t, 64>
+            >();
         }
     };
 }
