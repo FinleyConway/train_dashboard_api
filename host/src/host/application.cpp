@@ -4,9 +4,11 @@
 
 #include "host/networking/http/endpoints/train_endpoint.hpp"
 #include "host/networking/http/endpoints/motor_endpoint.hpp"
+#include "host/networking/http/endpoints/headlight_endpoint.hpp"
 
 #include "common/messages/handshake.hpp"
 #include "common/messages/motor.hpp"
+#include "common/messages/headlight.hpp"
 
 namespace host {
     application_t::application_t()
@@ -46,6 +48,12 @@ namespace host {
                 m_train_storage.update_motor_status(motor);
             }
         );
+
+        m_tcp_server.register_receive_callback<common::headlight_status_t>(
+            [&](const common::headlight_status_t& headlight) {
+                m_train_storage.update_headlight_status(headlight);
+            }
+        );
     }
 
     void application_t::register_endpoints() {
@@ -60,6 +68,12 @@ namespace host {
             m_tcp_server,
             m_http_server,
             "/api/motor_control"
+        );
+
+        headlight_endpoint_t::init(
+            m_tcp_server,
+            m_http_server,
+            "/api/headlight_control"
         );
     }
 }

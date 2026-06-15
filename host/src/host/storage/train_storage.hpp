@@ -11,12 +11,17 @@ namespace host {
     struct storage_t {
         uint32_t current_motor_duty = 0;
         bool is_motor_active = false;
+
+        uint16_t headlight_brightness = 0;
+        bool is_headlight_active = false;
     };
 
     inline void to_json(nlohmann::json& j, const storage_t & e) {
         j = {
             {"current_motor_duty", e.current_motor_duty},
-            {"is_motor_active", e.is_motor_active}
+            {"is_motor_active", e.is_motor_active},
+            {"headlight_brightness", e.headlight_brightness},
+            {"is_headlight_active", e.is_headlight_active}
         };
     }
 
@@ -34,10 +39,6 @@ namespace host {
             m_data.erase(id);
         }
 
-        bool empty() const {
-
-        }
-
         void update_motor_status(const common::motor_status_t& motor) {
             auto it = m_data.find(motor.id);
             if (it == m_data.end()) return;
@@ -46,6 +47,16 @@ namespace host {
 
             storage.current_motor_duty = motor.current_duty;
             storage.is_motor_active = motor.is_active;
+        }
+
+        void update_headlight_status(const common::headlight_status_t& headlight) {
+            auto it = m_data.find(headlight.id);
+            if (it == m_data.end()) return;
+
+            auto& storage = it->second;
+
+            storage.headlight_brightness = headlight.brightness;
+            storage.is_headlight_active = headlight.is_active;
         }
 
         nlohmann::json get_train_json(common::esp_id_t id) const {
@@ -73,16 +84,6 @@ namespace host {
 
             json["train_id"] = id;
             json["train_status"] = storage;
-
-            /*
-            {
-                "train_id" = 0,
-                "train_status" = {
-                    "current_motor_duty": 123,
-                    "is_motor_active": 1,
-                }
-            }
-            */
 
             return json;
         } 

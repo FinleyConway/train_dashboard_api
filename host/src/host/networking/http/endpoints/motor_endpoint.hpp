@@ -5,8 +5,10 @@
 
 #include "host/networking/tcp/tcp_server.hpp"
 #include "host/networking/http/http_utils.hpp"
+#include "host/logging/logger.hpp"
 
 #include "common/api/types.hpp"
+#include "common/messages/motor.hpp"
 
 namespace host {
     class motor_endpoint_t {
@@ -22,7 +24,7 @@ namespace host {
             try {
                 const auto body = nlohmann::json::parse(req.body);
 
-                const auto train_id        = body.at("train_id").get<common::esp_id_t>();
+                const auto train_id      = body.at("train_id").get<common::esp_id_t>();
                 const auto is_active     = body.at("is_active").get<bool>();
                 const auto starting_duty = body.at("starting_duty").get<uint32_t>();
                 const auto target_duty   = body.at("target_duty").get<uint32_t>();
