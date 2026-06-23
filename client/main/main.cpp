@@ -8,7 +8,10 @@
 #include "task_events/tcp_send_event.hpp"
 #include "tasks/tcp_task.hpp"
 
-#include "components/nfc_reader.hpp"
+#include "task_events/motor_command.hpp"
+#include "tasks/motor_task.hpp"
+
+#include "tasks/nfc_task.hpp"
 
 void connection_handle(bool has_connected) {
     if (has_connected) {
@@ -23,42 +26,24 @@ void connection_handle(bool has_connected) {
 }
 
 extern "C" void app_main() {
-    client::nfc_reader_t nfc_reader;
+    static client::wifi_t wifi;
 
-    ESP_ERROR_CHECK(nfc_reader.init(client::nfc_gpio_t {
-        .misco = GPIO_NUM_12,
-        .mosi  = GPIO_NUM_14,
-        .sck   = GPIO_NUM_13,
-        .cs    = GPIO_NUM_27
-    }));
+    ESP_ERROR_CHECK(wifi.connect_from_nvs());
 
-    ESP_LOGI("main", "Waiting for an ISO14443A Card ...");
+    if (!wifi.wait_connection()) {
+        client::provisioning_t wifi_prov(wifi);
 
-    while (true) {
-        client::nfc_tag_t tag;
-        esp_err_t err = nfc_reader.read_tag(tag);
-
-        if (err == ESP_OK) {
-            ESP_LOG_BUFFER_HEXDUMP("main", tag.uid.data(), tag.uid_length, ESP_LOG_INFO);
-            ESP_LOG_BUFFER_HEXDUMP("main", tag.data.data(), tag.data_length, ESP_LOG_INFO);
-        }
-
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        wifi_prov.start("esp_device", "", 1);
+        wifi_prov.wait_connection(connection_handle);
     }
 
-    // static client::wifi_t wifi;
+    ESP_LOGI("main", "connected");
 
-    // ESP_ERROR_CHECK(wifi.connect_from_nvs());
+    client::tcp_send_event_t::create(10);
+    client::tcp_task_t::init(2);
 
-    // if (!wifi.wait_connection()) {
-    //     client::provisioning_t wifi_prov(wifi);
+    client::motor_command_t::create();
+    client::motor_task_t::init(1);
 
-    //     wifi_prov.start("esp_device", "", 1);
-    //     wifi_prov.wait_connection(connection_handle);
-    // }
-
-    // ESP_LOGI("main", "connected");
-
-    // client::tcp_send_event_t::create(10);
-    // client::tcp_task_t::init(2);
+    client::nfc_task_t::init(1);
 }

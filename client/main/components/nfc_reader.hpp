@@ -8,6 +8,8 @@
 #include <pn532.h>
 #include <pn532_driver_spi.h>
 
+// https://docs.nxp.com/bundle/NTAG213_215_216/page/topics/memory_organization.html
+
 namespace client {
     struct nfc_gpio_t {
         gpio_num_t misco = GPIO_NUM_NC;
@@ -20,10 +22,13 @@ namespace client {
     };
 
     struct nfc_tag_t {
+        // (NTAG2XX_NTAG216 * 4 bytes) - read_only bytes
+        static constexpr size_t max_nfc_user_memory = 888;
+
         std::array<uint8_t, 7> uid{};
         uint8_t uid_length = 0;
 
-        std::array<uint16_t, 231 * 4> data{};
+        std::array<uint8_t, max_nfc_user_memory> data{};
         size_t data_length = 0;
     };
 
@@ -50,7 +55,7 @@ namespace client {
             
             esp_err_t err = pn532_init(&m_pn532_io);
             if (err != ESP_OK) {
-                ESP_LOGW("main", "failed to initialize PN532");
+                ESP_LOGW(c_tag, "failed to initialize PN532");
 
                 pn532_release(&m_pn532_io);
             }
@@ -79,78 +84,62 @@ namespace client {
         }
 
     private:
-        int16_t get_page_size() {
-            constexpr int16_t unknown_page = -1;
+        int16_t get_user_page_end() {
+            // TODO: i could cache this to speed up reading process???
             NTAG2XX_MODEL ntag_model = NTAG2XX_UNKNOWN;
-            esp_err_t err = ntag2xx_get_model(&m_pn532_io, &ntag_model);
+            ESP_ERROR_CHECK_WITHOUT_ABORT(ntag2xx_get_model(&m_pn532_io, &ntag_model));
 
-            if (err != ESP_OK) {
-                return unknown_page;
-            }
-
-            int16_t page_size = unknown_page;
-
+            // REF: https://docs.nxp.com/bundle/NTAG213_215_216/page/topics/memory_organization.html
             switch (ntag_model) {
-                case NTAG2XX_NTAG213:
-                    page_size = 45;
-                    ESP_LOGI(c_tag, "found NTAG213 target (or maybe NTAG203)");
-                    break;
-
-                case NTAG2XX_NTAG215:
-                    page_size = 135;
-                    ESP_LOGI(c_tag, "found NTAG215 target");
-                    break;
-
-                case NTAG2XX_NTAG216:
-                    page_size = 231;
-                    ESP_LOGI(c_tag, "found NTAG216 target");
-                    break;
-
-                default:
-                    ESP_LOGI(c_tag, "Found unknown NTAG target!");
-                    break;
+                case NTAG2XX_NTAG213: return 39;
+                case NTAG2XX_NTAG215: return 129;
+                case NTAG2XX_NTAG216: return 225;
+                default: return -1;
             }
-
-            return page_size;
         }
 
         esp_err_t read_page(nfc_tag_t& tag) {
-            esp_err_t err = ESP_FAIL;
-            int16_t page_size = get_page_size();
+            constexpr uint8_t page_size = 4;
+            int16_t end_page = get_user_page_end();
 
-            if (page_size < 0) {
+            if (end_page < 0) {
                 ESP_LOGW(c_tag, "Can't read the unknown tag!");
 
-                return err;
+                return ESP_FAIL;
             }
 
-            tag.data_length = page_size * 4;
+            // read the user memory 
+            int16_t bytes_read = 0;
 
-            for (int16_t page = 0; page < page_size; page += 4) {
+            for (int16_t page = c_user_start_page; page <= end_page; page += 4) {
                 uint8_t buf[16];
-                err = ntag2xx_read_page(&m_pn532_io, page, buf, 16);
-                
-                if (err != ESP_OK) {
-                    ESP_LOGI(c_tag, "Failed to read page %d", page);
 
-                    return err;
+                esp_err_t err = ntag2xx_read_page(&m_pn532_io, page, buf, 16);
+                if (err != ESP_OK) {
+                    ESP_LOGW(c_tag, "A partical read was captured!"); // maybe return a enum state? full read, partical read, fail?
+                    break;
                 }
 
-                std::memcpy(
-                    tag.data.data() + (page * 4),
-                    buf,
-                    sizeof(buf)
-                );
+                size_t offset = (page - c_user_start_page) * page_size;
+
+                // copy the read pages
+                std::memcpy(tag.data.data() + offset, buf, 16);
+
+                // keep track of pages read
+                bytes_read += 16;
             }
 
-            return err;
+            tag.data_length = bytes_read;
+
+            return ESP_OK;
         }
 
     private:
         pn532_io_t m_pn532_io;
 
-        static constexpr const char* c_tag = "nfc";
+        static constexpr const char* c_tag = "nfc_reader";
         static constexpr spi_host_device_t c_spi_host_nfc = SPI3_HOST;
-        static constexpr uint32_t c_spi_clockrate = 1000000;
+        static constexpr uint32_t c_spi_clockrate = 4000000;
+        static constexpr uint8_t c_user_start_page = 4;
     };
 }
