@@ -42,7 +42,12 @@ namespace client {
 
                 client::ndef_record_view_t record = tag.get_record();
 
-                ESP_LOGI("nfc", "Tag type: %s\n", record.type.data());
+                ESP_LOGI(
+                    "nfc",
+                    "Tag type: %.*s",
+                    (int)record.type.size(),
+                    record.type.data()
+                );
                 ESP_LOG_BUFFER_HEXDUMP("nfc", record.payload.data(), record.payload.size(), ESP_LOG_INFO);
             }
 

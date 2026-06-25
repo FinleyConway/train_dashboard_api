@@ -34,7 +34,7 @@ namespace client {
 
         ndef_record_view_t get_record() const {
             return ndef_parser_t::parse(
-                std::span<const uint8_t>{m_data.data(), m_read_bytes}
+                std::span<const uint8_t>(m_data.data(), m_read_bytes)
             );
         }
 
