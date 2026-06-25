@@ -3,6 +3,7 @@
 #include <freertos/FreeRTOS.h>
 
 #include "components/nfc_reader.hpp"
+#include "components/nfc_tag.hpp"
 
 namespace client {
     class nfc_task_t {
@@ -37,15 +38,12 @@ namespace client {
 
             while (true) {
                 client::nfc_tag_t tag;
-                esp_err_t err = nfc_reader.read_tag(tag);
+                nfc_reader.read_tag(tag);
 
-                if (err == ESP_OK) {
-                    ESP_LOG_BUFFER_HEXDUMP("nfc", tag.uid.data(), tag.uid_length, ESP_LOG_INFO);
-                    ESP_LOG_BUFFER_HEXDUMP("nfc", tag.data.data(), tag.data_length, ESP_LOG_INFO);
-                }
-                else {
-                    ESP_LOGW("nfc", "Failed to read tag!");
-                }
+                client::ndef_record_view_t record = tag.get_record();
+
+                ESP_LOGI("nfc", "Tag type: %s\n", record.type.data());
+                ESP_LOG_BUFFER_HEXDUMP("nfc", record.payload.data(), record.payload.size(), ESP_LOG_INFO);
             }
 
             vTaskDelete(nullptr);

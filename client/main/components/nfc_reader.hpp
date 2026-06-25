@@ -8,6 +8,8 @@
 #include <pn532.h>
 #include <pn532_driver_spi.h>
 
+#include "components/nfc_tag.hpp"
+
 // https://docs.nxp.com/bundle/NTAG213_215_216/page/topics/memory_organization.html
 
 namespace client {
@@ -19,17 +21,6 @@ namespace client {
 
         gpio_num_t reset = GPIO_NUM_NC;
         gpio_num_t irq   = GPIO_NUM_NC;
-    };
-
-    struct nfc_tag_t {
-        // (NTAG2XX_NTAG216 * 4 bytes) - read_only bytes
-        static constexpr size_t max_nfc_user_memory = 888;
-
-        std::array<uint8_t, 7> uid{};
-        uint8_t uid_length = 0;
-
-        std::array<uint8_t, max_nfc_user_memory> data{};
-        size_t data_length = 0;
     };
 
     class nfc_reader_t {
@@ -58,6 +49,7 @@ namespace client {
                 ESP_LOGW(c_tag, "failed to initialize PN532");
 
                 pn532_release(&m_pn532_io);
+                return err;
             }
 
             ESP_LOGI(c_tag, "nfc reader initialised!");
@@ -66,11 +58,14 @@ namespace client {
         }   
 
         esp_err_t read_tag(nfc_tag_t& tag, int32_t timeout = 0) {
+            nfc_tag_t::uid_t uid{};
+            uint8_t uid_length = 0;
+
             esp_err_t err = pn532_read_passive_target_id(
                 &m_pn532_io,
                 PN532_BRTY_ISO14443A_106KBPS,
-                tag.uid.data(),
-                &tag.uid_length,
+                uid.data(),
+                &uid_length,
                 timeout
             );
 
@@ -79,6 +74,8 @@ namespace client {
                 
                 return err;
             }
+            
+            tag.set_uid(std::move(uid), uid_length);
 
             return read_page(tag);
         }
@@ -87,7 +84,7 @@ namespace client {
         int16_t get_user_page_end() {
             // TODO: i could cache this to speed up reading process???
             NTAG2XX_MODEL ntag_model = NTAG2XX_UNKNOWN;
-            ESP_ERROR_CHECK_WITHOUT_ABORT(ntag2xx_get_model(&m_pn532_io, &ntag_model));
+            ntag2xx_get_model(&m_pn532_io, &ntag_model);
 
             // REF: https://docs.nxp.com/bundle/NTAG213_215_216/page/topics/memory_organization.html
             switch (ntag_model) {
@@ -109,6 +106,7 @@ namespace client {
             }
 
             // read the user memory 
+            nfc_tag_t::data_t data;
             int16_t bytes_read = 0;
 
             for (int16_t page = c_user_start_page; page <= end_page; page += 4) {
@@ -123,13 +121,13 @@ namespace client {
                 size_t offset = (page - c_user_start_page) * page_size;
 
                 // copy the read pages
-                std::memcpy(tag.data.data() + offset, buf, 16);
+                std::memcpy(data.data() + offset, buf, 16);
 
                 // keep track of pages read
                 bytes_read += 16;
             }
 
-            tag.data_length = bytes_read;
+            tag.set_payload(std::move(data), bytes_read);
 
             return ESP_OK;
         }
