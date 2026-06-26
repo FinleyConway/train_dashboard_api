@@ -25,9 +25,9 @@ namespace client {
 
     private:
         static void run(void* parameters) {
-            client::nfc_reader_t nfc_reader;
+            nfc_reader_t nfc_reader;
 
-            ESP_ERROR_CHECK(nfc_reader.init(client::nfc_gpio_t {
+            ESP_ERROR_CHECK(nfc_reader.init(nfc_gpio_t {
                 .misco = GPIO_NUM_19,
                 .mosi  = GPIO_NUM_18,
                 .sck   = GPIO_NUM_21,
@@ -37,18 +37,20 @@ namespace client {
             ESP_LOGI("nfc", "Waiting for an ISO14443A Card ...");
 
             while (true) {
-                client::nfc_tag_t tag;
-                nfc_reader.read_tag(tag);
+                nfc_tag_t tag(NTAG2XX_NTAG215);
+                nfc_read_state state = nfc_reader.read_tag(tag);
 
-                client::ndef_record_view_t record = tag.get_record();
+                if (state != nfc_read_state::fail) {
+                    ndef_record_view_t record = tag.get_record();
 
-                ESP_LOGI(
-                    "nfc",
-                    "Tag type: %.*s",
-                    (int)record.type.size(),
-                    record.type.data()
-                );
-                ESP_LOG_BUFFER_HEXDUMP("nfc", record.payload.data(), record.payload.size(), ESP_LOG_INFO);
+                    ESP_LOGI(
+                        "nfc",
+                        "Tag type: %.*s",
+                        (int)record.type.size(),
+                        record.type.data()
+                    );
+                    ESP_LOG_BUFFER_HEXDUMP("nfc", record.payload.data(), record.payload.size(), ESP_LOG_INFO);
+                }
             }
 
             vTaskDelete(nullptr);

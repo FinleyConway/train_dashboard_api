@@ -5,38 +5,35 @@
 #include <cstdint>
 #include <cstddef>
 
+#include <pn532.h>
+
 #include "utils/ndef_parser.hpp"
 
 namespace client {
     class nfc_tag_t {
+    public:
+        nfc_tag_t() = default;
+
+        explicit nfc_tag_t(NTAG2XX_MODEL ntag_model);
+
     private:
         // (NTAG2XX_NTAG216 * 4 bytes) - read_only bytes
-        static constexpr size_t max_nfc_user_memory = 888; 
-        static constexpr size_t max_uid_length = 10;
+        static constexpr size_t c_max_nfc_user_memory = 888; 
+        static constexpr size_t c_max_uid_length = 10;
 
     public:
-        using uid_t = std::array<uint8_t, max_uid_length>;
-        using data_t = std::array<uint8_t, max_nfc_user_memory>;
+        using uid_t = std::array<uint8_t, c_max_uid_length>;
+        using data_t = std::array<uint8_t, c_max_nfc_user_memory>;
 
-        void set_uid(uid_t&& uid, uint8_t uid_length) {
-            m_uid = std::move(uid);
-            m_uid_length = uid_length;
-        }
+        void set_uid(uid_t&& uid, uint8_t uid_length);
 
-        void set_payload(data_t&& payload, size_t read_bytes) {
-            m_data = std::move(payload);
-            m_read_bytes = read_bytes;
-        }
+        void set_payload(data_t&& payload, size_t read_bytes);
 
-        std::span<const uint8_t> get_uid() const {
-            return { m_uid.data(), m_uid_length };
-        }
+        NTAG2XX_MODEL get_model() const;
 
-        ndef_record_view_t get_record() const {
-            return ndef_parser_t::parse(
-                std::span<const uint8_t>(m_data.data(), m_read_bytes)
-            );
-        }
+        std::span<const uint8_t> get_uid() const;
+
+        ndef_record_view_t get_record() const;
 
     private:
         uid_t m_uid{};
@@ -44,5 +41,7 @@ namespace client {
 
         data_t m_data{};
         size_t m_read_bytes = 0;
+
+        NTAG2XX_MODEL m_ntag_model = NTAG2XX_UNKNOWN;
     };
 }

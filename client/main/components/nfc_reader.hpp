@@ -1,18 +1,15 @@
 #pragma once
 
-#include <array>
-
-#include <esp_log.h>
 #include <driver/gpio.h>
 
 #include <pn532.h>
 #include <pn532_driver_spi.h>
 
-#include "components/nfc_tag.hpp"
-
 // https://docs.nxp.com/bundle/NTAG213_215_216/page/topics/memory_organization.html
 
 namespace client {
+    class nfc_tag_t;
+
     struct nfc_gpio_t {
         gpio_num_t misco = GPIO_NUM_NC;
         gpio_num_t mosi  = GPIO_NUM_NC;
@@ -23,114 +20,31 @@ namespace client {
         gpio_num_t irq   = GPIO_NUM_NC;
     };
 
+    enum class nfc_read_state {
+        fail,
+        partical_read,
+        full_read
+    };
+
     class nfc_reader_t {
     public:
         nfc_reader_t() = default;
-        
-        ~nfc_reader_t() {
-            pn532_release(&m_pn532_io);
-        }
+        ~nfc_reader_t();
 
-        esp_err_t init(const nfc_gpio_t& gpio) {
-            ESP_ERROR_CHECK(pn532_new_driver_spi(
-                gpio.misco,
-                gpio.mosi,
-                gpio.sck, 
-                gpio.cs, 
-                gpio.reset,
-                gpio.irq,
-                c_spi_host_nfc,
-                c_spi_clockrate,
-                &m_pn532_io
-            ));
-            
-            esp_err_t err = pn532_init(&m_pn532_io);
-            if (err != ESP_OK) {
-                ESP_LOGW(c_tag, "failed to initialize PN532");
+        nfc_reader_t(const nfc_reader_t&) = delete;
+        nfc_reader_t& operator=(const nfc_reader_t&) = delete;
 
-                pn532_release(&m_pn532_io);
-                return err;
-            }
+        nfc_reader_t(nfc_reader_t&&) noexcept = default;
+        nfc_reader_t& operator=(nfc_reader_t&&) noexcept = default;
 
-            ESP_LOGI(c_tag, "nfc reader initialised!");
+        esp_err_t init(const nfc_gpio_t& gpio);
 
-            return err;
-        }   
-
-        esp_err_t read_tag(nfc_tag_t& tag, int32_t timeout = 0) {
-            nfc_tag_t::uid_t uid{};
-            uint8_t uid_length = 0;
-
-            esp_err_t err = pn532_read_passive_target_id(
-                &m_pn532_io,
-                PN532_BRTY_ISO14443A_106KBPS,
-                uid.data(),
-                &uid_length,
-                timeout
-            );
-
-            if (err != ESP_OK) {
-                ESP_LOGW(c_tag, "Failed to read tag!");
-                
-                return err;
-            }
-            
-            tag.set_uid(std::move(uid), uid_length);
-
-            return read_page(tag);
-        }
+        nfc_read_state read_tag(nfc_tag_t& tag, int32_t timeout = 0);
 
     private:
-        int16_t get_user_page_end() {
-            // TODO: i could cache this to speed up reading process???
-            NTAG2XX_MODEL ntag_model = NTAG2XX_UNKNOWN;
-            ntag2xx_get_model(&m_pn532_io, &ntag_model);
+        int16_t get_user_page_end(const nfc_tag_t& tag);
 
-            // REF: https://docs.nxp.com/bundle/NTAG213_215_216/page/topics/memory_organization.html
-            switch (ntag_model) {
-                case NTAG2XX_NTAG213: return 39;
-                case NTAG2XX_NTAG215: return 129;
-                case NTAG2XX_NTAG216: return 225;
-                default: return -1;
-            }
-        }
-
-        esp_err_t read_page(nfc_tag_t& tag) {
-            constexpr uint8_t page_size = 4;
-            int16_t end_page = get_user_page_end();
-
-            if (end_page < 0) {
-                ESP_LOGW(c_tag, "Can't read the unknown tag!");
-
-                return ESP_FAIL;
-            }
-
-            // read the user memory 
-            nfc_tag_t::data_t data;
-            int16_t bytes_read = 0;
-
-            for (int16_t page = c_user_start_page; page <= end_page; page += 4) {
-                uint8_t buf[16];
-
-                esp_err_t err = ntag2xx_read_page(&m_pn532_io, page, buf, 16);
-                if (err != ESP_OK) {
-                    ESP_LOGW(c_tag, "A partical read was captured!"); // maybe return a enum state? full read, partical read, fail?
-                    break;
-                }
-
-                size_t offset = (page - c_user_start_page) * page_size;
-
-                // copy the read pages
-                std::memcpy(data.data() + offset, buf, 16);
-
-                // keep track of pages read
-                bytes_read += 16;
-            }
-
-            tag.set_payload(std::move(data), bytes_read);
-
-            return ESP_OK;
-        }
+        nfc_read_state read_page(nfc_tag_t& tag);
 
     private:
         pn532_io_t m_pn532_io;
