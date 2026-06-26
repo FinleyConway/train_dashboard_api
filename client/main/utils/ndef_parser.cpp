@@ -5,7 +5,9 @@
 namespace client {
     ndef_record_view_t ndef_parser_t::parse(std::span<const uint8_t> data) {
         std::span<const uint8_t> record_view = try_get_record_view(data);
-        size_t index = 0;
+        if (record_view.empty()) return {};
+
+        uint8_t index = 0;
 
         // read the header infomation about the record layout
         const uint8_t header = record_view[index++];
@@ -61,10 +63,12 @@ namespace client {
                 return {};
             }
 
-            record_length = (data[index] << 8) | (data[index + 1]);
+            // NDEF stores the long record length as big-endian.
+            record_length = (data[index] << 8) | (data[index + 1]); // from left to right
 
             index += 2;
-        } else {
+        } 
+        else {
             record_length = len_byte;
         }
 
@@ -85,7 +89,7 @@ namespace client {
         return (header & 0x08) != 0;
     }
 
-    uint32_t ndef_parser_t::get_payload_length(uint8_t header, const auto& data, size_t& index) {
+    uint32_t ndef_parser_t::get_payload_length(uint8_t header, const auto& data, uint8_t& index) {
         const bool short_record = is_short_record(header);
 
         ESP_LOGI(c_tag, "Is short record: %d", short_record);
@@ -109,7 +113,7 @@ namespace client {
         return payload_length;
     }
 
-    uint8_t ndef_parser_t::get_id_length(uint8_t header, const auto& data, size_t& index) {
+    uint8_t ndef_parser_t::get_id_length(uint8_t header, const auto& data, uint8_t& index) {
         const bool has_length = has_id_length(header);
 
         ESP_LOGI(c_tag, "Has id length: %d", has_length);

@@ -25,9 +25,9 @@ namespace client {
 
         static bool has_id_length(uint8_t header);
 
-        static uint32_t get_payload_length(uint8_t header, const auto& data, size_t& index);
+        static uint32_t get_payload_length(uint8_t header, const auto& data, uint8_t& index);
 
-        static uint8_t get_id_length(uint8_t header, const auto& data, size_t& index);
+        static uint8_t get_id_length(uint8_t header, const auto& data, uint8_t& index);
 
     private:
         static constexpr const char* c_tag = "ndef_parser";
