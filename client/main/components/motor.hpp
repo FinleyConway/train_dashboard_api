@@ -2,12 +2,6 @@
 
 #include <driver/ledc.h>
 #include <driver/gpio.h>
-#include <esp_log.h>
-
-#define MOTOR_PWM_FREQ 18000
-#define MOTOR_PWM_MODE LEDC_HIGH_SPEED_MODE
-#define MOTOR_PWM_RES LEDC_TIMER_10_BIT 
-#define MOTOR_MAX_DUTY ((1 << 10) - 1)
 
 namespace client {
     enum class motor_direction_t {
@@ -20,95 +14,39 @@ namespace client {
     public:
         motor_t() = default;
 
-        void init(gpio_num_t a1, gpio_num_t a2) {
-            // configure pwm timer
-            ledc_timer_config_t pwm_timer = {};
-            pwm_timer.speed_mode      = LEDC_HIGH_SPEED_MODE;
-            pwm_timer.duty_resolution = MOTOR_PWM_RES;
-            pwm_timer.timer_num       = LEDC_TIMER_0;
-            pwm_timer.freq_hz         = MOTOR_PWM_FREQ;
-            pwm_timer.clk_cfg         = LEDC_AUTO_CLK;
-            ledc_timer_config(&pwm_timer);
+        motor_t(const motor_t&) = delete;
+        motor_t& operator=(const motor_t&) = delete;
 
-            configure_channel(LEDC_CHANNEL_0, a1);
-            configure_channel(LEDC_CHANNEL_1, a2);
-        }
+        motor_t(motor_t&&) noexcept = default;
+        motor_t& operator=(motor_t&&) noexcept = default;
 
-        void set_active_state(bool is_active) {
-            m_is_active = is_active;
+    public:
+        void init(gpio_num_t a1, gpio_num_t a2);
 
-            if (!is_active) {
-                set_motor_direction(motor_direction_t::none);
-                m_current_duty = 0; 
-            }
-        }
+        void set_active_state(bool is_active);
 
-        bool is_active() const {
-            return m_is_active;
-        }
+        bool is_active() const;
 
-        uint32_t get_current_duty() const {
-            return m_current_duty;
-        }
+        uint32_t get_current_duty() const;
 
-        motor_direction_t get_current_direction() const {
-            return m_current_direction;
-        }
+        motor_direction_t get_current_direction() const;
 
-        void set_motor_direction(motor_direction_t direction) {
-            if (direction == motor_direction_t::clockwise) {
-                ledc_set_duty(MOTOR_PWM_MODE, LEDC_CHANNEL_0, m_current_duty);
-                ledc_set_duty(MOTOR_PWM_MODE, LEDC_CHANNEL_1, 0);
-            }
-            else if (direction == motor_direction_t::counter_clockwise) {
-                ledc_set_duty(MOTOR_PWM_MODE, LEDC_CHANNEL_0, 0);
-                ledc_set_duty(MOTOR_PWM_MODE, LEDC_CHANNEL_1, m_current_duty);
-            }
-            else if (direction == motor_direction_t::none) {
-                ledc_set_duty(MOTOR_PWM_MODE, LEDC_CHANNEL_0, 0);
-                ledc_set_duty(MOTOR_PWM_MODE, LEDC_CHANNEL_1, 0);
-            }
-            else return;
+        void set_motor_direction(motor_direction_t direction);
 
-            ledc_update_duty(MOTOR_PWM_MODE, LEDC_CHANNEL_0);
-            ledc_update_duty(MOTOR_PWM_MODE, LEDC_CHANNEL_1);
-
-            m_current_direction = direction;
-        }
-
-        // TT motor seems to be only min of 750 before it starts turinng
-        void set_motor_duty(uint32_t duty) {
-            if (!m_is_active) {
-                ESP_LOGW("MOTOR", "Motor is not active");
-                return;
-            }
-
-            if (duty > MOTOR_MAX_DUTY) {
-                ESP_LOGW("MOTOR", "Given duty is more then motor max duty!");
-                return;
-            }
-
-            m_current_duty = duty;
-                
-            set_motor_direction(m_current_direction);
-        }
+        void set_motor_duty(uint32_t duty);
     
     private:
-        void configure_channel(ledc_channel_t channel, gpio_num_t pin) {
-            ledc_channel_config_t cfg = {};
-            cfg.gpio_num   = pin;
-            cfg.speed_mode = MOTOR_PWM_MODE;
-            cfg.channel    = channel;
-            cfg.timer_sel  = LEDC_TIMER_0;
-            cfg.duty       = 0;
-            cfg.hpoint     = 0;
-
-            ESP_ERROR_CHECK(ledc_channel_config(&cfg));
-        }
+        void configure_channel(ledc_channel_t channel, gpio_num_t pin);
 
     private:
         motor_direction_t m_current_direction = motor_direction_t::clockwise;
         uint32_t m_current_duty = 0;
         bool m_is_active = true;
+
+        static constexpr const char* c_tag = "motor";
+        static constexpr uint16_t c_motor_pwm_freq = 18000;
+        static constexpr ledc_mode_t c_motor_pwm_mode = LEDC_HIGH_SPEED_MODE;
+        static constexpr ledc_timer_bit_t c_motor_pwm_res = LEDC_TIMER_10_BIT;
+        static constexpr uint32_t c_motor_max_duty = ((1 << 10) - 1);
     };
 }
