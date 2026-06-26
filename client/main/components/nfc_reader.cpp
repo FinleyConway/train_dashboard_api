@@ -61,11 +61,12 @@ namespace client {
         return read_page(tag);
     }
 
-    int16_t nfc_reader_t::get_user_page_end(const nfc_tag_t& tag) {
+    int16_t nfc_reader_t::get_user_page_end(nfc_tag_t& tag) {
         NTAG2XX_MODEL ntag_model = tag.get_model();
 
         if (ntag_model == NTAG2XX_UNKNOWN) {
             ntag2xx_get_model(&m_pn532_io, &ntag_model);
+            tag.set_model(ntag_model);
         }
 
         switch (ntag_model) {

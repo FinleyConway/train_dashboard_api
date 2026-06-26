@@ -25,6 +25,8 @@ namespace client {
         using uid_t = std::array<uint8_t, c_max_uid_length>;
         using data_t = std::array<uint8_t, c_max_nfc_user_memory>;
 
+        void set_model(NTAG2XX_MODEL ntag_model);
+
         void set_uid(uid_t&& uid, uint8_t uid_length);
 
         void set_payload(data_t&& payload, size_t read_bytes);

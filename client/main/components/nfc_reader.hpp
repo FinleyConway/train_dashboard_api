@@ -42,7 +42,7 @@ namespace client {
         nfc_read_state read_tag(nfc_tag_t& tag, int32_t timeout = 0);
 
     private:
-        int16_t get_user_page_end(const nfc_tag_t& tag);
+        int16_t get_user_page_end(nfc_tag_t& tag);
 
         nfc_read_state read_page(nfc_tag_t& tag);
 

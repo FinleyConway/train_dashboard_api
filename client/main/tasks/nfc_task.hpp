@@ -37,7 +37,7 @@ namespace client {
             ESP_LOGI("nfc", "Waiting for an ISO14443A Card ...");
 
             while (true) {
-                nfc_tag_t tag(NTAG2XX_NTAG215);
+                nfc_tag_t tag;
                 nfc_read_state state = nfc_reader.read_tag(tag);
 
                 if (state != nfc_read_state::fail) {

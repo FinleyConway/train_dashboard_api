@@ -4,6 +4,10 @@ namespace client {
     nfc_tag_t::nfc_tag_t(NTAG2XX_MODEL ntag_model) : m_ntag_model(ntag_model) {
     }
 
+    void nfc_tag_t::set_model(NTAG2XX_MODEL ntag_model) {
+        m_ntag_model = ntag_model;
+    }
+
     void nfc_tag_t::set_uid(nfc_tag_t::uid_t&& uid, uint8_t uid_length) {
         m_uid = std::move(uid);
         m_uid_length = uid_length;
