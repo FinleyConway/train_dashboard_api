@@ -2,6 +2,7 @@
 
 #include "host/logging/logger.hpp"
 
+#include "host/networking/http/endpoints/ping_endpoint.hpp"
 #include "host/networking/http/endpoints/train_endpoint.hpp"
 #include "host/networking/http/endpoints/motor_endpoint.hpp"
 #include "host/networking/http/endpoints/headlight_endpoint.hpp"
@@ -57,6 +58,11 @@ namespace host {
     }
 
     void application_t::register_endpoints() {
+        ping_endpoint_t::init(
+            m_http_server,
+            "/api/ping"
+        );
+
         train_endpoint_t::init(
             m_tcp_server,
             m_train_storage,
