@@ -11,7 +11,7 @@ struct test_one_t {
         common::serialise_t::write(payload, data.id);
     }
 
-    static test_one_t deserialise(std::span<uint8_t> payload) {
+    static test_one_t deserialise(std::span<const uint8_t> payload) {
         test_one_t result;
 
         result.id = common::serialise_t::read<uint16_t>(payload); 
@@ -33,7 +33,7 @@ struct test_two_t {
         common::serialise_t::write(payload, data.id);
     }
 
-    static test_two_t deserialise(std::span<uint8_t> payload) {
+    static test_two_t deserialise(std::span<const uint8_t> payload) {
         test_two_t result;
 
         result.id = common::serialise_t::read<uint16_t>(payload); 
@@ -67,8 +67,8 @@ TEST_CASE( "packet_registry class", "[packet_registry]" ) {
         std::optional<size_t> bytes_1 = registry.expected_payload_size(0);
         size_t bytes_2 = registry.packet_size<test_one_t>();
 
-        REQUIRE(bytes_1 == 0);
-        REQUIRE(bytes_2 == 0);
+        REQUIRE(*bytes_1 == 0);
+        REQUIRE(bytes_2 == 4);
 
         registry.register_callback<test_one_t, &test_one_callback>();
 
@@ -76,7 +76,7 @@ TEST_CASE( "packet_registry class", "[packet_registry]" ) {
         size_t reg_bytes_2 = registry.packet_size<test_one_t>();
 
         REQUIRE(reg_bytes_1 == 2);
-        REQUIRE(reg_bytes_2 == 2);
+        REQUIRE(reg_bytes_2 == 4);
     }
 
     SECTION("Create payload") {

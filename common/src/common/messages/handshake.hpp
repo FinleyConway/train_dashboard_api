@@ -11,7 +11,7 @@ namespace common {
             serialise_t::write(payload, data.id);
         }
 
-        static esp_init_request_t deserialise(std::span<uint8_t> payload) {
+        static esp_init_request_t deserialise(std::span<const uint8_t> payload) {
             esp_init_request_t result;
 
             result.id = serialise_t::read<uint16_t>(payload); 
@@ -31,7 +31,7 @@ namespace common {
             serialise_t::write(payload, data.id);
         }
 
-        static esp_init_response_t deserialise(std::span<uint8_t> payload) {
+        static esp_init_response_t deserialise(std::span<const uint8_t> payload) {
             esp_init_response_t result;
 
             result.id = serialise_t::read<uint16_t>(payload); 

@@ -54,7 +54,7 @@ TEST_CASE( "Integer serialisation", "[serialisation]" ) {
         payload[0] = 0x0A;
         payload[1] = 0x00;
 
-        std::span<uint8_t> payload_sp(payload);
+        std::span<const uint8_t> payload_sp(payload);
         uint16_t value = serialise_t::read<uint16_t>(payload_sp);
 
         REQUIRE(value == 10);
@@ -77,7 +77,7 @@ TEST_CASE( "Integer serialisation", "[serialisation]" ) {
         serialise_t::write(write_payload_sp, write_t.pop);
 
         test_t send_t;
-        std::span<uint8_t> read_payload_sp(alt_payload);
+        std::span<const uint8_t> read_payload_sp(alt_payload);
 
         send_t.id = serialise_t::read<int64_t>(read_payload_sp);
         send_t.sweets = serialise_t::read<uint32_t>(read_payload_sp);
@@ -100,7 +100,7 @@ TEST_CASE( "Integer serialisation", "[serialisation]" ) {
         serialise_t::write(write_payload_sp, array_write.arr);
 
         test_with_array_t array_read;
-        std::span<uint8_t> read_payload_sp(alt_payload);
+        std::span<const uint8_t> read_payload_sp(alt_payload);
 
         array_read.arr = serialise_t::read<int32_t, 10>(read_payload_sp);
 
