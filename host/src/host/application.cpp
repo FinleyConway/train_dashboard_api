@@ -10,6 +10,7 @@
 #include "common/messages/handshake.hpp"
 #include "common/messages/motor.hpp"
 #include "common/messages/headlight.hpp"
+#include "common/messages/rail_location.hpp"
 
 namespace host {
     application_t::application_t()
@@ -53,6 +54,12 @@ namespace host {
         m_tcp_server.register_receive_callback<common::headlight_status_t>(
             [&](const common::headlight_status_t& headlight) {
                 m_train_storage.update_headlight_status(headlight);
+            }
+        );
+
+        m_tcp_server.register_receive_callback<common::rail_location_t>(
+            [&](const common::rail_location_t& location) {
+                LOG_INFO("Rail id: {}, type: {}", location.id, static_cast<int>(location.type));
             }
         );
     }

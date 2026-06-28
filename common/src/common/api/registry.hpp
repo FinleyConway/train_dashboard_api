@@ -5,6 +5,7 @@
 #include "common/messages/handshake.hpp"
 #include "common/messages/motor.hpp"
 #include "common/messages/headlight.hpp"
+#include "common/messages/rail_location.hpp"
 
 namespace common {
     using registry_t = packet_registry_impl_t<
@@ -13,7 +14,8 @@ namespace common {
         motor_control_t,
         motor_status_t,
         headlight_control_t,
-        headlight_status_t
+        headlight_status_t,
+        rail_location_t
     >;
 
     using payload_t = registry_t::payload_t;
