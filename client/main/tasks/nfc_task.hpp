@@ -4,6 +4,7 @@
 
 #include "components/nfc_reader.hpp"
 #include "components/nfc_tag.hpp"
+#include "utils/rail_location.hpp"
 
 namespace client {
     class nfc_task_t {
@@ -42,14 +43,14 @@ namespace client {
 
                 if (state != nfc_read_state::fail) {
                     ndef_record_view_t record = tag.get_record();
+                    
+                    if (record.type == "rail") {
+                        ESP_LOG_BUFFER_HEXDUMP("nfc", record.payload.data(), record.payload.size(), ESP_LOG_INFO);
 
-                    ESP_LOGI(
-                        "nfc",
-                        "Tag type: %.*s",
-                        (int)record.type.size(),
-                        record.type.data()
-                    );
-                    ESP_LOG_BUFFER_HEXDUMP("nfc", record.payload.data(), record.payload.size(), ESP_LOG_INFO);
+                        auto rail = rail_location_t::deserialise(record.payload);
+
+                        ESP_LOGI("nfc", "Rail: (id: %llu, type: %d)", rail.id, rail.type);
+                    }
                 }
             }
 

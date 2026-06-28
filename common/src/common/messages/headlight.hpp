@@ -12,7 +12,7 @@ namespace common {
             serialise_t::write(payload, data.is_active);
         }
 
-        static headlight_control_t deserialise(std::span<uint8_t> payload) {
+        static headlight_control_t deserialise(std::span<const  uint8_t> payload) {
             headlight_control_t result;
 
             result.brightness = serialise_t::read<uint16_t>(payload);
@@ -40,7 +40,7 @@ namespace common {
             serialise_t::write(payload, data.is_active);
         }
 
-        static headlight_status_t deserialise(std::span<uint8_t> payload) {
+        static headlight_status_t deserialise(std::span<const uint8_t> payload) {
             headlight_status_t result;
 
             result.id = serialise_t::read<common::esp_id_t>(payload);

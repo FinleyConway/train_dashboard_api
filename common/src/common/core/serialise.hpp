@@ -10,7 +10,7 @@
 
 #define EMPTY_MESSAGE(type)                                                     \
     static void serialise(std::span<uint8_t>& payload, const type& data) {}     \
-    static type deserialise(std::span<uint8_t> payload) { return {}; }          \
+    static type deserialise(std::span<const uint8_t> payload) { return {}; }          \
     static constexpr size_t payload_size() { return 0; }                          
 
 namespace common {
@@ -52,7 +52,7 @@ namespace common {
         /// @param payload The message payload
         /// @return The expected primitive type data
         template<primitive_type T>
-        static T read(std::span<uint8_t>& payload) {
+        static T read(std::span<const uint8_t>& payload) {
             assert(payload.size() >= sizeof(T));
 
             T primitive{};
@@ -72,7 +72,7 @@ namespace common {
         /// @param payload A message payload
         /// @return The expected contiguous primitive type data
         template<typename T, size_t N>
-        static std::array<T, N> read(std::span<uint8_t>& payload) {
+        static std::array<T, N> read(std::span<const uint8_t>& payload) {
             std::array<T, N> arr;
 
             for (auto& v : arr) {

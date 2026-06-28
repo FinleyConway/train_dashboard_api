@@ -16,7 +16,7 @@ namespace common {
             serialise_t::write(payload, data.is_active);
         }
 
-        static motor_control_t deserialise(std::span<uint8_t> payload) {
+        static motor_control_t deserialise(std::span<const uint8_t> payload) {
             motor_control_t result;
 
             result.starting_duty = serialise_t::read<uint32_t>(payload);
@@ -48,7 +48,7 @@ namespace common {
             serialise_t::write(payload, data.is_active);
         }
 
-        static motor_status_t deserialise(std::span<uint8_t> payload) {
+        static motor_status_t deserialise(std::span<const uint8_t> payload) {
             motor_status_t result;
 
             result.id = serialise_t::read<common::esp_id_t>(payload);

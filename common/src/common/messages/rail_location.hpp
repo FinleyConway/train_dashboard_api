@@ -13,7 +13,7 @@ namespace common {
             serialise_t::write(payload, data.type);
         }
 
-        static rail_location_t deserialise(std::span<uint8_t> payload) {
+        static rail_location_t deserialise(std::span<const uint8_t> payload) {
             rail_location_t result;
 
             result.id = serialise_t::read<uint64_t>(payload);
