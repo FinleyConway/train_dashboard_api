@@ -3,26 +3,54 @@
 #include <esp_log.h>
 
 namespace client {
-    void motor_t::init(gpio_num_t a1, gpio_num_t a2) {
+    motor_t::~motor_t() {
+        gpio_reset_pin(m_gpio.ain_a);
+        gpio_reset_pin(m_gpio.ain_b);
+        gpio_reset_pin(m_gpio.standby);
+    }
+
+    void motor_t::init(const motor_gpio_t& gpio) {
+        m_gpio = gpio;
+        
         // configure pwm timer
         ledc_timer_config_t pwm_timer = {};
-        pwm_timer.speed_mode      = LEDC_HIGH_SPEED_MODE;
+        pwm_timer.speed_mode      = c_motor_pwm_mode;
         pwm_timer.duty_resolution = c_motor_pwm_res;
         pwm_timer.timer_num       = LEDC_TIMER_0;
         pwm_timer.freq_hz         = c_motor_pwm_freq;
         pwm_timer.clk_cfg         = LEDC_AUTO_CLK;
         ESP_ERROR_CHECK(ledc_timer_config(&pwm_timer));
 
-        configure_channel(LEDC_CHANNEL_0, a1);
-        configure_channel(LEDC_CHANNEL_1, a2);
+        ledc_channel_config_t cfg = {};
+        cfg.gpio_num   = gpio.pwm;
+        cfg.speed_mode = c_motor_pwm_mode;
+        cfg.channel    = gpio.pwm_channel;
+        cfg.timer_sel  = LEDC_TIMER_0;
+        cfg.duty       = 0;
+        cfg.hpoint     = 0;
+        ESP_ERROR_CHECK(ledc_channel_config(&cfg));
+
+        // setup driver 
+        gpio_set_direction(gpio.ain_a, GPIO_MODE_OUTPUT);
+        gpio_set_direction(gpio.ain_b, GPIO_MODE_OUTPUT);
+        gpio_set_direction(gpio.standby, GPIO_MODE_OUTPUT);
+
+        // enable driver
+        gpio_set_level(gpio.standby, true);
     }
 
     void motor_t::set_active_state(bool is_active) {
         m_is_active = is_active;
 
+        gpio_set_level(m_gpio.standby, is_active);
+
+        ESP_LOGI(c_tag, "Motor active: %d", is_active);
+
         if (!is_active) {
             set_motor_direction(motor_direction_t::none);
-            m_current_duty = 0; 
+            
+            ESP_ERROR_CHECK(ledc_set_duty(c_motor_pwm_mode, m_gpio.pwm_channel, m_current_duty));
+            ESP_ERROR_CHECK(ledc_update_duty(c_motor_pwm_mode, m_gpio.pwm_channel));
         }
     }
 
@@ -40,21 +68,18 @@ namespace client {
 
     void motor_t::set_motor_direction(motor_direction_t direction) {
         if (direction == motor_direction_t::clockwise) {
-            ESP_ERROR_CHECK(ledc_set_duty(c_motor_pwm_mode, LEDC_CHANNEL_0, m_current_duty));
-            ESP_ERROR_CHECK(ledc_set_duty(c_motor_pwm_mode, LEDC_CHANNEL_1, 0));
+            gpio_set_level(m_gpio.ain_a, true);
+            gpio_set_level(m_gpio.ain_b, false);
         }
         else if (direction == motor_direction_t::counter_clockwise) {
-            ESP_ERROR_CHECK(ledc_set_duty(c_motor_pwm_mode, LEDC_CHANNEL_0, 0));
-            ESP_ERROR_CHECK(ledc_set_duty(c_motor_pwm_mode, LEDC_CHANNEL_1, m_current_duty));
+            gpio_set_level(m_gpio.ain_a, false);
+            gpio_set_level(m_gpio.ain_b, true);
         }
         else if (direction == motor_direction_t::none) {
-            ESP_ERROR_CHECK(ledc_set_duty(c_motor_pwm_mode, LEDC_CHANNEL_0, 0));
-            ESP_ERROR_CHECK(ledc_set_duty(c_motor_pwm_mode, LEDC_CHANNEL_1, 0));
+            gpio_set_level(m_gpio.ain_a, false);
+            gpio_set_level(m_gpio.ain_b, false);
         }
         else return;
-
-        ESP_ERROR_CHECK(ledc_update_duty(c_motor_pwm_mode, LEDC_CHANNEL_0));
-        ESP_ERROR_CHECK(ledc_update_duty(c_motor_pwm_mode, LEDC_CHANNEL_1));
 
         m_current_direction = direction;
     }
@@ -71,19 +96,10 @@ namespace client {
         }
 
         m_current_duty = duty;
-            
-        set_motor_direction(m_current_direction);
-    }
 
-    void motor_t::configure_channel(ledc_channel_t channel, gpio_num_t pin) {
-        ledc_channel_config_t cfg = {};
-        cfg.gpio_num   = pin;
-        cfg.speed_mode = c_motor_pwm_mode;
-        cfg.channel    = channel;
-        cfg.timer_sel  = LEDC_TIMER_0;
-        cfg.duty       = 0;
-        cfg.hpoint     = 0;
+        ESP_LOGI(c_tag, "Motor duty: %lu", duty);
 
-        ESP_ERROR_CHECK(ledc_channel_config(&cfg));
+        ESP_ERROR_CHECK(ledc_set_duty(c_motor_pwm_mode, m_gpio.pwm_channel, m_current_duty));
+        ESP_ERROR_CHECK(ledc_update_duty(c_motor_pwm_mode, m_gpio.pwm_channel));
     }
 }

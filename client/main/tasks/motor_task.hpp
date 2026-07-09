@@ -29,7 +29,13 @@ namespace client {
     private:
         static void run(void* parameters) {
             motor_t motor;
-            motor.init(GPIO_NUM_23, GPIO_NUM_22);
+            motor.init(motor_gpio_t {
+                .pwm_channel = LEDC_CHANNEL_0,
+                .pwm = GPIO_NUM_33,
+                .ain_a = GPIO_NUM_26,
+                .ain_b = GPIO_NUM_32,
+                .standby = GPIO_NUM_25
+            });
 
             while (true) {
                 // block thread and wait for motor_control commands
