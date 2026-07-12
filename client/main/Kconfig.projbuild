@@ -14,5 +14,20 @@ menu "Train ESP Client"
                 int "Timeout reconnect wait"
                 default 30
         endmenu
+
+        menu "NFC"
+            config NFC_MISO_GPIO
+                int "Miso pin"
+                default 19
+            config NFC_MOSI_GPIO
+                int "Mosi pin"
+                default 18
+            config NFC_SCK_GPIO
+                int "Sck pin"
+                default 21
+            config NFC_CS_GPIO
+                int "Cs pin"
+                default 5
+        endmenu
     endmenu
 endmenu

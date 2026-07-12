@@ -1,6 +1,7 @@
 #pragma once
 
 #include <freertos/FreeRTOS.h>
+#include <sdkconfig.h>
 
 #include "components/nfc_reader.hpp"
 #include "components/nfc_tag.hpp"
@@ -30,13 +31,11 @@ namespace client {
             nfc_reader_t nfc_reader;
 
             ESP_ERROR_CHECK(nfc_reader.init(nfc_gpio_t {
-                .misco = GPIO_NUM_19,
-                .mosi  = GPIO_NUM_18,
-                .sck   = GPIO_NUM_21,
-                .cs    = GPIO_NUM_5
+                .miso  = static_cast<gpio_num_t>(CONFIG_NFC_MISO_GPIO),
+                .mosi  = static_cast<gpio_num_t>(CONFIG_NFC_MOSI_GPIO),
+                .sck   = static_cast<gpio_num_t>(CONFIG_NFC_SCK_GPIO),
+                .cs    = static_cast<gpio_num_t>(CONFIG_NFC_CS_GPIO)
             }));
-
-            ESP_LOGI(c_tag, "Waiting for an ISO14443A Card ...");
 
             while (true) {
                 nfc_tag_t tag;
@@ -50,7 +49,9 @@ namespace client {
 
                         auto rail = common::rail_location_t::deserialise(record.payload);
 
-                        ESP_LOGI("nfc", "Rail: (id: %llu, type: %d)", rail.id, rail.type);
+                        ESP_LOGI(c_tag, "Rail: (id: %llu, type: %d)", rail.id, rail.type);
+
+                        tcp_send_event_t::send(tcp_event_data_t(rail));
                     }
                 }
             }

@@ -11,7 +11,7 @@ namespace client {
     class nfc_tag_t;
 
     struct nfc_gpio_t {
-        gpio_num_t misco = GPIO_NUM_NC;
+        gpio_num_t miso = GPIO_NUM_NC;
         gpio_num_t mosi  = GPIO_NUM_NC;
         gpio_num_t sck   = GPIO_NUM_NC;
         gpio_num_t cs    = GPIO_NUM_NC;

@@ -14,7 +14,7 @@ namespace client {
 
     esp_err_t nfc_reader_t::init(const nfc_gpio_t& gpio) {
         ESP_ERROR_CHECK(pn532_new_driver_spi(
-            gpio.misco,
+            gpio.miso,
             gpio.mosi,
             gpio.sck, 
             gpio.cs, 
