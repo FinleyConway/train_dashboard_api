@@ -1,11 +1,15 @@
 #pragma once
 
 #include <freertos/FreeRTOS.h>
+#include <sdkconfig.h>
+
+#include "task_events/tcp/tcp_send_event.hpp"
+#include "task_events/tcp/tcp_event_data.hpp"
+#include "task_events/motor_command.hpp"
+
+#include "networking/tcp_client.hpp"
 
 #include "common/messages/motor.hpp"
-#include "task_events/tcp_send_event.hpp"
-#include "task_events/motor_command.hpp"
-#include "networking/tcp_client.hpp"
 
 namespace client {
     class tcp_task_t {
@@ -35,40 +39,11 @@ namespace client {
                 try_connect(client);
 
                 while (client.is_connected()) {
-                    if (!handle_send(client)) {
-                        break;
-                    }
-
-                    tcp_status_t status = client.listen_to_server();
-
-                    switch (status) {
-
-                        case tcp_status_t::success: break;
-
-                        case tcp_status_t::timeout:
-                            ESP_LOGW("TCP_TASK", "Timeout, trying again");
-                            break;
-
-                        case tcp_status_t::unknown_packet:
-                            ESP_LOGW("TCP_TASK", "Unknown packet received");
-                            continue;
-
-                        case tcp_status_t::connection_closed:
-                            ESP_LOGW("TCP_TASK", "Server closed connection");
-                            goto disconnect;
-
-                        case tcp_status_t::failed_to_connect:
-                        case tcp_status_t::socket_failure:
-                        case tcp_status_t::failure:
-                        default:
-                            ESP_LOGE("TCP_TASK", "Fatal socket error in recv loop (%d)", static_cast<int>(status));
-                            goto disconnect; 
-
-                    }
+                    if (!handle_send(client)) break;
+                    if (!handle_listen(client)) break;
                 }
             
-            disconnect:
-                ESP_LOGI("TCP_TASK", "Disconnected");
+                ESP_LOGI(c_tag, "Disconnected");
 
                 client.disconnect();
             }
@@ -82,76 +57,83 @@ namespace client {
         }
 
         static void try_connect(tcp_client_t& client) {
-            // TODO: Add retry attempts
-
             constexpr TickType_t retry_delay = pdMS_TO_TICKS(5000);
-            constexpr int32_t tcp_timeout_sec = 60;
             
-            ESP_LOGI("TCP_TASK", "Connecting...");
+            ESP_LOGI(c_tag, "Connecting...");
 
-            while (client.try_connect(tcp_timeout_sec) != tcp_status_t::success) {
+            while (client.try_connect(CONFIG_TCP_TIMEOUT) != tcp_status_t::success) {
                 vTaskDelay(retry_delay);
             }
 
-            ESP_LOGI("TCP_TASK", "Connected");
+            ESP_LOGI(c_tag, "Connected");
         }
 
         static bool handle_send(tcp_client_t& client) {
-            tcp_status_t status{};
+            constexpr TickType_t wait_delay = 0;
             tcp_event_data_t event_data;
 
-            if (!tcp_send_event_t::receive(event_data, 0)) return true; // nothing to send
+            // drain the event queue
+            while (tcp_send_event_t::receive(event_data, wait_delay)) {
+                uint8_t attempts = 0;
 
-            switch (event_data.type) {
+                while (true) {
+                    if (attempts == CONFIG_TCP_TIMEOUT_ATTEMPTS) {
+                        return false; // fully timed out
+                    }
 
-                case tcp_event_data_t::type_t::init_respond: {
-                    status = client.send_to_server(event_data.data.init_respond);
-                    break;
+                    tcp_status_t status = event_data.send_to_client(client);
+
+                    if (status == tcp_status_t::success) {
+                        attempts = 0;
+                        break; // move on the next event
+                    }
+                    else if (status == tcp_status_t::timeout) {
+                        attempts++;
+                        continue; // try again
+                    }
+                    else {
+                        return false; // tcp error
+                    }
                 }
-
             }
 
-            if (status == tcp_status_t::success) {
-                return true;
-            }
-
-            return handle_send_errors(status);
+            return true;
         }
 
-        static bool handle_send_errors(tcp_status_t status) {
-            switch (status) {
+        static bool handle_listen(tcp_client_t& client) {
+            uint8_t attempts = 0;
 
-                case tcp_status_t::timeout:
-                    ESP_LOGW("TCP_TASK", "Timeout, trying again");
-                    return true; 
+            while (true) {
+                if (attempts == CONFIG_TCP_TIMEOUT_ATTEMPTS) {
+                    return false; // fully timed out
+                }
 
-                case tcp_status_t::connection_closed:
-                    ESP_LOGW("TCP_TASK", "Connection closed during send");
-                    return false;
+                tcp_status_t status = client.listen_to_server();
 
-                case tcp_status_t::socket_failure:
-                    ESP_LOGE("TCP_TASK", "Socket failure during send (errno=%d)", errno);
-                    return false;
-
-                case tcp_status_t::failure:
-                default:
-                    ESP_LOGE("TCP_TASK", "Unknown send failure (status=%d, errno=%d)", static_cast<int>(status), errno);
-                    return false;
-
+                if (status == tcp_status_t::success) {
+                    break;
+                }
+                else if (status == tcp_status_t::timeout) {
+                    attempts++;
+                    continue; // try again
+                }
+                else {
+                    return false; // tcp error
+                }
             }
+
+            return true;
         }
 
     private:
         static void on_init_request(const common::esp_init_request_t& init_request) {
-            ESP_LOGI("TCP_TASK", "Received server response, sending ack...");
+            ESP_LOGI(c_tag, "Received server response, sending ack...");
 
-            tcp_event_data_t event_data;
-            event_data.type = tcp_event_data_t::type_t::init_respond;
-            event_data.data.init_respond = {
-                .id = init_request.id
-            };
-
-            tcp_send_event_t::send(event_data);
+            tcp_send_event_t::send(tcp_event_data_t(
+                common::esp_init_response_t {
+                    .id = init_request.id
+                }
+            ));
 
             // store id somewhere
         }
@@ -161,6 +143,7 @@ namespace client {
         }
 
     private:
+        static constexpr const char* c_tag = "tcp_task";
         inline static TaskHandle_t s_handle = nullptr;
         inline static uint32_t s_stack_size = 8192;
     };        

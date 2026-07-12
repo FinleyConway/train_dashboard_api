@@ -4,7 +4,8 @@
 
 #include "components/nfc_reader.hpp"
 #include "components/nfc_tag.hpp"
-#include "utils/rail_location.hpp"
+
+#include "common/messages/rail_location.hpp"
 
 namespace client {
     class nfc_task_t {
@@ -35,7 +36,7 @@ namespace client {
                 .cs    = GPIO_NUM_5
             }));
 
-            ESP_LOGI("nfc", "Waiting for an ISO14443A Card ...");
+            ESP_LOGI(c_tag, "Waiting for an ISO14443A Card ...");
 
             while (true) {
                 nfc_tag_t tag;
@@ -45,9 +46,9 @@ namespace client {
                     ndef_record_view_t record = tag.get_record();
                     
                     if (record.type == "rail") {
-                        ESP_LOG_BUFFER_HEXDUMP("nfc", record.payload.data(), record.payload.size(), ESP_LOG_INFO);
+                        ESP_LOG_BUFFER_HEXDUMP(c_tag, record.payload.data(), record.payload.size(), ESP_LOG_INFO);
 
-                        auto rail = rail_location_t::deserialise(record.payload);
+                        auto rail = common::rail_location_t::deserialise(record.payload);
 
                         ESP_LOGI("nfc", "Rail: (id: %llu, type: %d)", rail.id, rail.type);
                     }
@@ -58,6 +59,7 @@ namespace client {
         }
 
     private:
+        static constexpr const char* c_tag = "nfc-task";
         inline static TaskHandle_t s_handle = nullptr;
         inline static uint32_t s_stack_size = 2048 * 2;
     };

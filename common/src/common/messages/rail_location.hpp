@@ -25,7 +25,7 @@ namespace common {
         static constexpr size_t payload_size() {
             return serialise_t::message_size<
                 uint64_t, 
-                uint8_t
+                rail_type_t
             >();
         }
     };

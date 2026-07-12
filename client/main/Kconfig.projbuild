@@ -1,0 +1,18 @@
+menu "Train ESP Client"
+    menu "Task Events"
+        config TCP_EVENT_QUEUE_SIZE
+            int "Size of the tcp event queue"
+            default 10
+    endmenu
+
+    menu "RTOS Tasks"
+        menu "TCP"
+            config TCP_TIMEOUT_ATTEMPTS
+                int "Timeout retry attempts"
+                default 3
+            config TCP_TIMEOUT
+                int "Timeout reconnect wait"
+                default 30
+        endmenu
+    endmenu
+endmenu

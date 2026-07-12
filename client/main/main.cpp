@@ -5,7 +5,6 @@
 #include "networking/wifi/provisioning/provisioning.hpp"
 #include "esp_https_server.h"
 
-#include "task_events/tcp_send_event.hpp"
 #include "tasks/tcp_task.hpp"
 
 #include "task_events/motor_command.hpp"
@@ -39,7 +38,6 @@ extern "C" void app_main() {
 
     ESP_LOGI("main", "connected");
 
-    client::tcp_send_event_t::create(10);
     client::tcp_task_t::init(2);
 
     client::motor_command_t::create();
