@@ -1,5 +1,6 @@
 #include <esp_err.h>
 #include <esp_log.h>
+#include <sdkconfig.h>
 
 #include "networking/wifi/wifi.hpp"
 #include "networking/wifi/provisioning/provisioning.hpp"
@@ -28,7 +29,11 @@ extern "C" void app_main() {
     if (!wifi.wait_connection()) {
         client::provisioning_t wifi_prov(wifi);
 
-        wifi_prov.start("esp_device", "", 1);
+        wifi_prov.start(
+            CONFIG_WIFI_AP_SSID,
+            CONFIG_WIFI_AP_PASSWORD,
+            CONFIG_WIFI_AP_MAX_CONNECTIONS
+        );
         wifi_prov.wait_connection(connection_handle);
     }
 

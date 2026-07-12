@@ -1,4 +1,16 @@
 menu "Train ESP Client"
+    menu "Wifi Prov"
+        config WIFI_AP_SSID
+            string "Access point ssid"
+            default "esp_device"
+        config WIFI_AP_PASSWORD
+            string "Access point password"
+            default ""
+        config WIFI_AP_MAX_CONNECTIONS
+            int "Max Connections"
+            default 1
+    endmenu
+
     menu "Task Events"
         config TCP_EVENT_QUEUE_SIZE
             int "Size of the tcp event queue"
