@@ -3,13 +3,9 @@
 
 #include "networking/wifi/wifi.hpp"
 #include "networking/wifi/provisioning/provisioning.hpp"
-#include "esp_https_server.h"
 
 #include "tasks/tcp_task.hpp"
-
-#include "task_events/motor_command.hpp"
 #include "tasks/motor_task.hpp"
-
 #include "tasks/nfc_task.hpp"
 
 void connection_handle(bool has_connected) {
@@ -39,9 +35,6 @@ extern "C" void app_main() {
     ESP_LOGI("main", "connected");
 
     client::tcp_task_t::init(2);
-
-    client::motor_command_t::create();
     client::motor_task_t::init(1);
-
     client::nfc_task_t::init(1);
 }

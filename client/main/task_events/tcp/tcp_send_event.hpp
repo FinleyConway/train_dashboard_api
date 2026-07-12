@@ -1,9 +1,8 @@
 #pragma once
 
 #include <freertos/FreeRTOS.h>
-#include <esp_log.h>
-#include <esp_err.h>
 #include <sdkconfig.h>
+#include <esp_err.h>
 
 #include "task_events/tcp/tcp_event_data.hpp"
 
