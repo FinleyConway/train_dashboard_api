@@ -20,7 +20,7 @@ namespace client {
         gpio_num_t irq   = GPIO_NUM_NC;
     };
 
-    enum class nfc_read_state {
+    enum class nfc_read_state_t {
         fail,
         partical_read,
         full_read
@@ -39,12 +39,12 @@ namespace client {
 
         esp_err_t init(const nfc_gpio_t& gpio);
 
-        nfc_read_state read_tag(nfc_tag_t& tag, int32_t timeout = 0);
+        nfc_read_state_t read_tag(nfc_tag_t& tag, int32_t timeout = 0);
 
     private:
         int16_t get_user_page_end(nfc_tag_t& tag);
 
-        nfc_read_state read_page(nfc_tag_t& tag);
+        nfc_read_state_t read_page(nfc_tag_t& tag);
 
     private:
         pn532_io_t m_pn532_io;

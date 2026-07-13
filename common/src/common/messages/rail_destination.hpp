@@ -4,13 +4,11 @@
 #include "common/api/types.hpp"
 
 namespace common {
-    struct rail_location_t {
-        esp_id_t id;
+    struct rail_destination_t {
         uint64_t rail_id;
         rail_type_t type;
 
         static void serialise(std::span<uint8_t>& payload, const rail_location_t& data) {
-            serialise_t::write(payload, data.id);
             serialise_t::write(payload, data.rail_id);
             serialise_t::write(payload, data.type);
         }
@@ -18,7 +16,6 @@ namespace common {
         static rail_location_t deserialise(std::span<const uint8_t> payload) {
             rail_location_t result;
 
-            result.id = serialise_t::read<esp_id_t>(payload);
             result.rail_id = serialise_t::read<uint64_t>(payload);
             result.type = serialise_t::read<rail_type_t>(payload); 
 
@@ -27,7 +24,6 @@ namespace common {
 
         static constexpr size_t payload_size() {
             return serialise_t::message_size<
-                esp_id_t,
                 uint64_t, 
                 rail_type_t
             >();

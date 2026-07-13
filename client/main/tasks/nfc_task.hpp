@@ -9,17 +9,18 @@
 #include "task_events/tcp/tcp_send_event.hpp"
 #include "task_events/tcp/tcp_event_data.hpp"
 
+#include "utils/rail_nfc.hpp"
 #include "common/messages/rail_location.hpp"
 
 namespace client {
     class nfc_task_t {
     public:
-        static void init(UBaseType_t priority_offset) {
+        static void init(UBaseType_t priority_offset, common::esp_id_t id) {
             xTaskCreate(
                 run,
                 "nfc_task_t",
                 s_stack_size,
-                nullptr,
+                &id,
                 tskIDLE_PRIORITY + priority_offset,
                 &s_handle
             );
@@ -31,6 +32,7 @@ namespace client {
 
     private:
         static void run(void* parameters) {
+            common::esp_id_t train_id = *static_cast<common::esp_id_t*>(parameters);
             nfc_reader_t nfc_reader;
 
             ESP_ERROR_CHECK(nfc_reader.init(nfc_gpio_t {
@@ -42,19 +44,25 @@ namespace client {
 
             while (true) {
                 nfc_tag_t tag;
-                nfc_read_state state = nfc_reader.read_tag(tag);
+                nfc_read_state_t state = nfc_reader.read_tag(tag);
 
-                if (state != nfc_read_state::fail) {
+                if (state != nfc_read_state_t::fail) {
                     ndef_record_view_t record = tag.get_record();
                     
                     if (record.type == "rail") {
                         ESP_LOG_BUFFER_HEXDUMP(c_tag, record.payload.data(), record.payload.size(), ESP_LOG_INFO);
 
-                        auto rail = common::rail_location_t::deserialise(record.payload);
+                        auto rail = rail_nfc_t::deserialise(record.payload);
 
-                        ESP_LOGI(c_tag, "Rail: (id: %llu, type: %d)", rail.id, rail.type);
+                        ESP_LOGI(c_tag, "Rail: (id: %llu, type: %d)", rail.rail_id, rail.type);
 
-                        tcp_send_event_t::send(tcp_event_data_t(rail));
+                        tcp_send_event_t::send(tcp_event_data_t(
+                            common::rail_location_t {
+                                .id = train_id,
+                                .rail_id = rail.rail_id,
+                                .type = rail.type
+                            }
+                        ));
                     }
                 }
             }

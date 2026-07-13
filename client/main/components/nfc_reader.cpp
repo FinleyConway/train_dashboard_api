@@ -38,7 +38,7 @@ namespace client {
         return err;
     }  
 
-    nfc_read_state nfc_reader_t::read_tag(nfc_tag_t& tag, int32_t timeout) {
+    nfc_read_state_t nfc_reader_t::read_tag(nfc_tag_t& tag, int32_t timeout) {
         nfc_tag_t::uid_t uid{};
         uint8_t uid_length = 0;
 
@@ -53,7 +53,7 @@ namespace client {
         if (err != ESP_OK) {
             ESP_LOGW(c_tag, "Failed to read tag!");
             
-            return nfc_read_state::fail;
+            return nfc_read_state_t::fail;
         }
         
         tag.set_uid(std::move(uid), uid_length);
@@ -77,18 +77,18 @@ namespace client {
         }
     }
 
-    nfc_read_state nfc_reader_t::read_page(nfc_tag_t& tag) {
+    nfc_read_state_t nfc_reader_t::read_page(nfc_tag_t& tag) {
         constexpr uint8_t page_size = 4;
         const int16_t end_page = get_user_page_end(tag);
 
         if (end_page < 0) {
             ESP_LOGW(c_tag, "Can't read the unknown tag!");
 
-            return nfc_read_state::fail;
+            return nfc_read_state_t::fail;
         }
 
         // read the user memory 
-        nfc_read_state state = nfc_read_state::full_read;
+        nfc_read_state_t state = nfc_read_state_t::full_read;
         nfc_tag_t::data_t data;
         int16_t bytes_read = 0;
 
@@ -100,7 +100,7 @@ namespace client {
             esp_err_t err = ntag2xx_read_page(&m_pn532_io, page, buf, 16);
             if (err != ESP_OK) {
                 ESP_LOGW(c_tag, "A partical read was captured!"); 
-                state = nfc_read_state::partical_read;
+                state = nfc_read_state_t::partical_read;
                 
                 break;
             }
