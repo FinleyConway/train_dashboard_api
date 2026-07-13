@@ -28,6 +28,12 @@ menu "Train ESP Client"
         endmenu
 
         menu "NFC"
+            config NFC_TASK_STACK
+                int "Task stack size (words)"
+                default 3500
+            config NFC_TASK_PRIORITY
+                int "Task priority"
+                default 1
             config NFC_MISO_GPIO
                 int "Miso pin"
                 default 19

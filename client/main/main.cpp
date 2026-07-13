@@ -41,6 +41,6 @@ extern "C" void app_main() {
 
     client::tcp_manager_task_t::init([](common::esp_id_t id) {
         client::motor_task_t::init(1);
-        client::nfc_task_t::init(1, id);
+        client::nfc_task_t::init(id);
     });
 }

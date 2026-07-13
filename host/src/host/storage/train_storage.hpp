@@ -39,26 +39,6 @@ namespace host {
             m_data.erase(id);
         }
 
-        void update_motor_status(const common::motor_status_t& motor) {
-            auto it = m_data.find(motor.id);
-            if (it == m_data.end()) return;
-
-            auto& storage = it->second;
-
-            storage.current_motor_duty = motor.current_duty;
-            storage.is_motor_active = motor.is_active;
-        }
-
-        void update_headlight_status(const common::headlight_status_t& headlight) {
-            auto it = m_data.find(headlight.id);
-            if (it == m_data.end()) return;
-
-            auto& storage = it->second;
-
-            storage.headlight_brightness = headlight.brightness;
-            storage.is_headlight_active = headlight.is_active;
-        }
-
         nlohmann::json get_train_json(common::esp_id_t id) const {
             auto it = m_data.find(id);
             if (it == m_data.end()) return nlohmann::json::object();

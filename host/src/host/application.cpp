@@ -45,18 +45,6 @@ namespace host {
             }
         );
 
-        m_tcp_server.register_receive_callback<common::motor_status_t>(
-            [&](const common::motor_status_t& motor) {
-                m_train_storage.update_motor_status(motor);
-            }
-        );
-
-        m_tcp_server.register_receive_callback<common::headlight_status_t>(
-            [&](const common::headlight_status_t& headlight) {
-                m_train_storage.update_headlight_status(headlight);
-            }
-        );
-
         m_tcp_server.register_receive_callback<common::rail_location_t>(
             [&](const common::rail_location_t& location) {
                 LOG_INFO("Rail id: {}, type: {}", location.id, static_cast<int>(location.type));

@@ -39,7 +39,7 @@ namespace client {
 
         esp_err_t init(const nfc_gpio_t& gpio);
 
-        nfc_read_state_t read_tag(nfc_tag_t& tag, int32_t timeout = 0);
+        nfc_read_state_t wait_for_tag(nfc_tag_t& tag, int32_t timeout = 0);
 
     private:
         int16_t get_user_page_end(nfc_tag_t& tag);

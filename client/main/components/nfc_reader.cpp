@@ -38,7 +38,7 @@ namespace client {
         return err;
     }  
 
-    nfc_read_state_t nfc_reader_t::read_tag(nfc_tag_t& tag, int32_t timeout) {
+    nfc_read_state_t nfc_reader_t::wait_for_tag(nfc_tag_t& tag, int32_t timeout) {
         nfc_tag_t::uid_t uid{};
         uint8_t uid_length = 0;
 
