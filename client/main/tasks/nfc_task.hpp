@@ -6,6 +6,9 @@
 #include "components/nfc_reader.hpp"
 #include "components/nfc_tag.hpp"
 
+#include "task_events/tcp/tcp_send_event.hpp"
+#include "task_events/tcp/tcp_event_data.hpp"
+
 #include "common/messages/rail_location.hpp"
 
 namespace client {

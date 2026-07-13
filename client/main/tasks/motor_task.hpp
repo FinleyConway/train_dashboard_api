@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <algorithm>
 
 #include <freertos/FreeRTOS.h>
 
@@ -29,6 +30,7 @@ namespace client {
     private:
         static void run(void* parameters) {
             motor_t motor;
+            
             motor.init(motor_gpio_t {
                 .pwm_channel = LEDC_CHANNEL_0,
                 .pwm = GPIO_NUM_33,

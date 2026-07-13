@@ -11,7 +11,7 @@ namespace client {
         static bool send(const common::motor_control_t& motor_control) {
             ESP_ERROR_CHECK(try_create());
 
-            xQueueOverwrite(s_event, &motor_control);
+            return xQueueOverwrite(s_event, &motor_control);
         }
 
         static bool receive(common::motor_control_t& motor_control, TickType_t timeout_tick = portMAX_DELAY) {

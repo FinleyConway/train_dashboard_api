@@ -5,7 +5,7 @@
 #include "networking/wifi/wifi.hpp"
 #include "networking/wifi/provisioning/provisioning.hpp"
 
-#include "tasks/tcp_task.hpp"
+#include "tasks/tcp/tcp_manager_task.hpp"
 #include "tasks/motor_task.hpp"
 #include "tasks/nfc_task.hpp"
 
@@ -39,7 +39,7 @@ extern "C" void app_main() {
 
     ESP_LOGI("main", "connected");
 
-    client::tcp_task_t::init(2);
-    client::motor_task_t::init(1);
-    client::nfc_task_t::init(1);
+    client::tcp_manager_task_t::init();
+    //client::motor_task_t::init(1);
+    //client::nfc_task_t::init(1);
 }
