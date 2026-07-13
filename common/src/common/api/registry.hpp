@@ -12,9 +12,7 @@ namespace common {
         esp_init_request_t,
         esp_init_response_t,
         motor_control_t,
-        motor_status_t,
         headlight_control_t,
-        headlight_status_t,
         rail_location_t
     >;
 

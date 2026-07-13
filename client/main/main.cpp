@@ -39,7 +39,8 @@ extern "C" void app_main() {
 
     ESP_LOGI("main", "connected");
 
-    client::tcp_manager_task_t::init();
-    //client::motor_task_t::init(1);
-    //client::nfc_task_t::init(1);
+    client::tcp_manager_task_t::init([](common::esp_id_t id) {
+        client::motor_task_t::init(1);
+        client::nfc_task_t::init(1);
+    });
 }

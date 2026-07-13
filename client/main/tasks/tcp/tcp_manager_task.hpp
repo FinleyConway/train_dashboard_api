@@ -9,8 +9,11 @@ namespace client {
     class tcp_client_t;
 
     class tcp_manager_task_t {
+    private:
+        using connection_callback_t = void(*)(common::esp_id_t);
+
     public:
-        static void init();
+        static void init(connection_callback_t&& callback);
 
         static TaskHandle_t get_handle();
 
@@ -29,6 +32,7 @@ namespace client {
     private:
         static constexpr const char* c_tag = "tcp_task";
 
+        inline static connection_callback_t s_connection_callback = nullptr;
         inline static TaskHandle_t s_handle = nullptr;
         inline static uint32_t s_stack_size = 8192;
     };

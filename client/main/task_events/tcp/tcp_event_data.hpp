@@ -8,7 +8,8 @@
 namespace client {
     enum class tcp_event_type_t {
         init_respond,
-        rail_location
+        rail_location,
+        motor_status
     };
 
     struct tcp_event_data_t {

@@ -42,13 +42,15 @@ namespace client {
             while (true) {
                 // block thread and wait for motor_control commands
                 common::motor_control_t motor_control;
-                motor_command_t::receive(motor_control); 
 
-                // do motor stuff
-                motor.set_active_state(motor_control.is_active);
+                if (motor_command_t::receive(motor_control)) { 
+                    // do motor stuff
+                    motor.set_active_state(motor_control.is_active);
+                    motor.set_motor_direction(client::motor_direction_t::clockwise); // need to control this via tcp
 
-                if (motor_control.is_active) {
-                    adjust_motor(motor, motor_control);
+                    if (motor_control.is_active) {
+                        adjust_motor(motor, motor_control);
+                    }
                 }
             }
 
@@ -61,13 +63,11 @@ namespace client {
 
             const TickType_t start_tick = xTaskGetTickCount();
 
-            motor.set_motor_direction(client::motor_direction_t::clockwise);
-
             while (true) {
                 TickType_t now = xTaskGetTickCount();
                 float elapsed_ms = (now - start_tick) * portTICK_PERIOD_MS;
-
                 float t = elapsed_ms / static_cast<float>(motor_control.ramp_time_ms);
+
                 if (t >= 1.0f) break;
 
                 float eased = ease(std::clamp(t, 0.0f, 1.0f));

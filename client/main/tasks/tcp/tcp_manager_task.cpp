@@ -13,7 +13,7 @@
 #include "task_events/tcp/tcp_send_event.hpp"
 
 namespace client {
-    void tcp_manager_task_t::init() {
+    void tcp_manager_task_t::init(connection_callback_t&& callback) {
         xTaskCreate(
             run,
             "tcp_task_t",
@@ -22,6 +22,8 @@ namespace client {
             3, // priority
             &s_handle
         );
+
+        s_connection_callback = std::move(callback);
     }
 
     TaskHandle_t tcp_manager_task_t::get_handle() {
@@ -82,7 +84,9 @@ namespace client {
             }
         ));
 
-        // store id somewhere
+        if (s_connection_callback != nullptr) {
+            s_connection_callback(init_request.id);
+        }
     }
 
     void tcp_manager_task_t::on_motor_control(const common::motor_control_t& motor_control) {
