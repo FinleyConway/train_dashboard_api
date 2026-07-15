@@ -48,7 +48,7 @@ namespace host {
 
         m_tcp_server.register_receive_callback<common::rail_location_t>(
             [&](const common::rail_location_t& location) {
-                LOG_INFO("Rail id: {}, type: {}", location.id, static_cast<int>(location.type));
+                LOG_INFO("Train id: {}, Rail id: {}, type: {}", location.id, location.rail_id, static_cast<int>(location.type));
             }
         );
     }
