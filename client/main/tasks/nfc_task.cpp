@@ -4,6 +4,7 @@
 
 #include "task_events/tcp/tcp_send_event.hpp"
 #include "task_events/tcp/tcp_event_data.hpp"
+#include "task_events/rail_command.hpp"
 #include "components/nfc_reader.hpp"
 #include "components/nfc_tag.hpp"
 #include "utils/rail_nfc.hpp"
@@ -47,9 +48,10 @@ namespace client {
                     ndef_record_view_t record = tag.get_record();
                     
                     if (record.type == "rail") {
-                        // read the payload data and inform the server
+                        // read the payload data
                         auto rail = rail_nfc_t::deserialise(record.payload);
 
+                        // notify server
                         tcp_send_event_t::send(tcp_event_data_t(
                             common::rail_location_t {
                                 .id = train_id,
@@ -57,6 +59,9 @@ namespace client {
                                 .type = rail.type
                             }
                         ));
+
+                        // notify train controller
+                        rail_command_t::send(rail.rail_id);
                     }
                 }
             }

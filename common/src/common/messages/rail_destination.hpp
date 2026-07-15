@@ -5,27 +5,23 @@
 
 namespace common {
     struct rail_destination_t {
-        uint64_t rail_id;
-        rail_type_t type;
+        rail_id_t id;
 
-        static void serialise(std::span<uint8_t>& payload, const rail_location_t& data) {
-            serialise_t::write(payload, data.rail_id);
-            serialise_t::write(payload, data.type);
+        static void serialise(std::span<uint8_t>& payload, const rail_destination_t& data) {
+            serialise_t::write(payload, data.id);
         }
 
-        static rail_location_t deserialise(std::span<const uint8_t> payload) {
-            rail_location_t result;
+        static rail_destination_t deserialise(std::span<const uint8_t> payload) {
+            rail_destination_t result;
 
-            result.rail_id = serialise_t::read<uint64_t>(payload);
-            result.type = serialise_t::read<rail_type_t>(payload); 
+            result.id = serialise_t::read<rail_id_t>(payload);
 
             return result;
         }
 
         static constexpr size_t payload_size() {
             return serialise_t::message_size<
-                uint64_t, 
-                rail_type_t
+                rail_id_t
             >();
         }
     };

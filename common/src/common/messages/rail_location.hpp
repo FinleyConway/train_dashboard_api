@@ -6,7 +6,7 @@
 namespace common {
     struct rail_location_t {
         esp_id_t id;
-        uint64_t rail_id;
+        rail_id_t rail_id;
         rail_type_t type;
 
         static void serialise(std::span<uint8_t>& payload, const rail_location_t& data) {
@@ -19,7 +19,7 @@ namespace common {
             rail_location_t result;
 
             result.id = serialise_t::read<esp_id_t>(payload);
-            result.rail_id = serialise_t::read<uint64_t>(payload);
+            result.rail_id = serialise_t::read<rail_id_t>(payload);
             result.type = serialise_t::read<rail_type_t>(payload); 
 
             return result;
@@ -28,7 +28,7 @@ namespace common {
         static constexpr size_t payload_size() {
             return serialise_t::message_size<
                 esp_id_t,
-                uint64_t, 
+                rail_id_t, 
                 rail_type_t
             >();
         }

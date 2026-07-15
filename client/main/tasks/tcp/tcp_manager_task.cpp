@@ -9,6 +9,7 @@
 #include "tasks/tcp/tcp_listen_task.hpp"
 
 #include "task_events/motor_command.hpp"
+#include "task_events/station_command.hpp"
 #include "task_events/tcp/tcp_event_data.hpp"
 #include "task_events/tcp/tcp_send_event.hpp"
 
@@ -61,6 +62,7 @@ namespace client {
     void tcp_manager_task_t::register_messages(tcp_client_t& client) {
         client.register_receieve_callback<common::esp_init_request_t, &on_init_request>();
         client.register_receieve_callback<common::motor_control_t, &on_motor_control>();
+        client.register_receieve_callback<common::rail_destination_t, &on_station_add>();
     }
 
     void tcp_manager_task_t::try_connect(tcp_client_t& client) {
@@ -91,5 +93,9 @@ namespace client {
 
     void tcp_manager_task_t::on_motor_control(const common::motor_control_t& motor_control) {
         motor_command_t::send(motor_control);
+    }
+
+    void tcp_manager_task_t::on_station_add(const common::rail_destination_t& rail_destination) {
+        station_command_t::send(rail_destination.id);
     }
 }

@@ -8,20 +8,7 @@
 namespace client {
     class motor_command_t {
     public:
-        static bool send(const common::motor_control_t& motor_control) {
-            ESP_ERROR_CHECK(try_create());
-
-            return xQueueOverwrite(s_event, &motor_control);
-        }
-
-        static bool receive(common::motor_control_t& motor_control, TickType_t timeout_tick = portMAX_DELAY) {
-            if (s_event == nullptr) return false; 
-
-            return xQueueReceive(s_event, &motor_control, timeout_tick) == pdPASS;
-        }
-
-    private:
-        static esp_err_t try_create() {
+        static esp_err_t init() {
             if (s_event != nullptr) return ESP_OK;
 
             // creating a latest-value queue
@@ -32,6 +19,18 @@ namespace client {
             }
 
             return ESP_OK;
+        }
+
+        static bool send(const common::motor_control_t& motor_control) {
+            configASSERT(s_event);
+
+            return xQueueOverwrite(s_event, &motor_control);
+        }
+
+        static bool receive(common::motor_control_t& motor_control, TickType_t timeout_tick = portMAX_DELAY) {
+           configASSERT(s_event);
+
+            return xQueueReceive(s_event, &motor_control, timeout_tick) == pdPASS;
         }
 
     private:

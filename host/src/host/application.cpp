@@ -11,6 +11,7 @@
 #include "common/messages/motor.hpp"
 #include "common/messages/headlight.hpp"
 #include "common/messages/rail_location.hpp"
+#include "common/messages/rail_destination.hpp"
 
 namespace host {
     application_t::application_t()
@@ -76,5 +77,32 @@ namespace host {
             m_http_server,
             "/api/headlight_control"
         );
+
+        m_http_server.Post("/api/station_request", [&](const httplib::Request& req, httplib::Response& res) {
+            try {
+                const auto body = nlohmann::json::parse(req.body);
+
+                const auto train_id   = body.at("train_id").get<common::esp_id_t>();
+                const auto rail_id = body.at("rail_id").get<uint64_t>();
+
+                /*
+                {
+                    "train_id": 0,
+                    "rail_id": 280192301223,
+                }
+                */
+
+                tcp_status_t status = m_tcp_server.send_to_client(train_id, common::rail_destination_t {
+                    .id = rail_id
+                });
+
+                http_utils_t::send(res, status);
+
+                LOG_INFO("Sending station request for train {}", train_id);
+            }
+            catch (...) {
+                http_utils_t::bad_request(res, "invalid json payload");
+            }
+        });
     }
 }

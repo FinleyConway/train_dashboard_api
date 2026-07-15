@@ -35,5 +35,14 @@ namespace common {
                 uint8_t
             >();
         }
+
+        static motor_control_t stop() {
+            return motor_control_t {
+                .starting_duty = 0,
+                .target_duty   = 0,
+                .ramp_time_ms  = 0,
+                .is_active     = false
+            };
+        }
     };
 }

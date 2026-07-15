@@ -5,9 +5,15 @@
 #include "networking/wifi/wifi.hpp"
 #include "networking/wifi/provisioning/provisioning.hpp"
 
+#include "task_events/tcp/tcp_send_event.hpp"
+#include "task_events/motor_command.hpp"
+#include "task_events/rail_command.hpp"
+#include "task_events/station_command.hpp"
+
 #include "tasks/tcp/tcp_manager_task.hpp"
 #include "tasks/motor_task.hpp"
 #include "tasks/nfc_task.hpp"
+#include "tasks/train_controller_task.hpp"
 
 void connection_handle(bool has_connected) {
     if (has_connected) {
@@ -39,8 +45,16 @@ extern "C" void app_main() {
 
     ESP_LOGI("main", "connected");
 
+    // init task events
+    ESP_ERROR_CHECK(client::tcp_send_event_t::init());
+    ESP_ERROR_CHECK(client::motor_command_t::init());
+    ESP_ERROR_CHECK(client::rail_command_t::init());
+    ESP_ERROR_CHECK(client::station_command_t::init());
+
+    // init tasks
     client::tcp_manager_task_t::init([](common::esp_id_t id) {
         client::motor_task_t::init(1);
         client::nfc_task_t::init(id);
+        client::train_controller_task_t::init();
     });
 }

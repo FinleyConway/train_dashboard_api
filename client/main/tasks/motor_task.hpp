@@ -13,6 +13,10 @@ namespace client {
     class motor_task_t {
     public:
         static void init(UBaseType_t priority_offset) {
+            if (s_handle != nullptr) {
+                vTaskDelete(s_handle);
+            }
+
             xTaskCreate(
                 run,
                 "motor_task_t",
