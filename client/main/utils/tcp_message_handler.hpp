@@ -8,11 +8,9 @@ namespace client {
     struct system_bus_t;
     class tcp_client_t;
 
-    using connection_callback_t = void (*)(void*, common::esp_id_t);
-
     class tcp_message_handler_t {
     public:
-        static void init(system_bus_t& bus, void* ctx, connection_callback_t callback);
+        static void init(system_bus_t& bus);
 
         static void register_messages(tcp_client_t& client);
 
@@ -27,8 +25,6 @@ namespace client {
         static void handle_error();
 
     private:
-        inline static void* s_context = nullptr;
         inline static system_bus_t* s_bus = nullptr;
-        inline static connection_callback_t s_connection_callback = nullptr;
     };
 }

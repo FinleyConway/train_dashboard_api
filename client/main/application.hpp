@@ -18,7 +18,7 @@ namespace client {
     class application_t {
     public:
         application_t() : 
-            m_tcp_manager_task(m_bus, this, on_server_acknowledgement),
+            m_tcp_manager_task(m_bus),
             m_motor_task(m_bus),
             m_nfc_task(m_bus),
             m_train_controller_task(m_bus) 
@@ -62,14 +62,6 @@ namespace client {
             }
 
             // TODO: Provide fail indication through buzzer or lights
-        }
-
-        static void on_server_acknowledgement(void* ctx, common::esp_id_t id) {
-            auto* app = static_cast<application_t*>(ctx);
-
-            app->m_bus.train_id = id;
-
-            ESP_LOGI(c_tag, "Server ack, assigned id: %hu", id);
         }
 
     private:

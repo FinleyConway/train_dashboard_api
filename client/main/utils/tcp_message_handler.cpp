@@ -9,10 +9,8 @@
 #include "common/messages/rail_destination.hpp"
 
 namespace client {
-    void tcp_message_handler_t::init(system_bus_t& bus, void* ctx, connection_callback_t callback) {
-        s_context = ctx;
+    void tcp_message_handler_t::init(system_bus_t& bus) {
         s_bus = &bus;
-        s_connection_callback = callback;
     }
 
     void tcp_message_handler_t::register_messages(tcp_client_t& client) {
@@ -30,9 +28,9 @@ namespace client {
             }
         ));
 
-        if (s_connection_callback != nullptr) {
-            s_connection_callback(s_context, init_request.id);
-        }
+        s_bus->train_id = init_request.id;
+
+        ESP_LOGI("tcp_message_handler", "Server ack, assigned id: %hu", init_request.id);
     }
 
     void tcp_message_handler_t::on_motor_control(const common::motor_control_t& motor_control) {

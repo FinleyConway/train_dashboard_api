@@ -5,14 +5,13 @@
 #include "tasks/tcp_send_task.hpp"
 #include "tasks/tcp_listen_task.hpp"
 #include "networking/tcp_client.hpp"
-#include "utils/tcp_message_handler.hpp"
 
 namespace client {
     struct system_bus_t;
 
     class tcp_manager_task_t {
     public:
-        tcp_manager_task_t(system_bus_t& system_bus, void* ctx, connection_callback_t callback);
+        tcp_manager_task_t(system_bus_t& system_bus);
         ~tcp_manager_task_t();
 
         tcp_manager_task_t(const tcp_manager_task_t&) = delete;

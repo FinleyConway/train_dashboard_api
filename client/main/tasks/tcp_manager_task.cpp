@@ -6,13 +6,14 @@
 #include "networking/tcp_client.hpp"
 #include "tasks/tcp_send_task.hpp"
 #include "tasks/tcp_listen_task.hpp"
+#include "utils/tcp_message_handler.hpp"
 
 namespace client {
-    tcp_manager_task_t::tcp_manager_task_t(system_bus_t& system_bus, void* ctx, connection_callback_t callback) : 
+    tcp_manager_task_t::tcp_manager_task_t(system_bus_t& system_bus) : 
         m_tcp_read_task(system_bus, *this),
         m_tcp_listen_task(system_bus, *this)
     {
-        tcp_message_handler_t::init(system_bus, ctx, callback);
+        tcp_message_handler_t::init(system_bus);
     }
 
     tcp_manager_task_t::~tcp_manager_task_t() {
