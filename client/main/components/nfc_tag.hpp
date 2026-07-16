@@ -37,6 +37,8 @@ namespace client {
 
         ndef_record_view_t get_record() const;
 
+        bool uid_equals(const uid_t& uid) const;
+
     private:
         uid_t m_uid{};
         uint8_t m_uid_length = 0;

@@ -10,6 +10,7 @@
 #include "utils/rail_nfc.hpp"
 
 #include "common/messages/rail_location.hpp"
+#include "nfc_task.hpp"
 
 namespace client {
     void nfc_task_t::init(common::esp_id_t id) {
@@ -28,44 +29,56 @@ namespace client {
     }
 
     void nfc_task_t::run(void* parameters) {
-            common::esp_id_t train_id = *static_cast<common::esp_id_t*>(parameters);
-            nfc_reader_t nfc_reader;
+        common::esp_id_t train_id = *static_cast<common::esp_id_t*>(parameters);
+        nfc_reader_t nfc_reader;
 
-            ESP_ERROR_CHECK(nfc_reader.init(nfc_gpio_t {
-                .miso  = static_cast<gpio_num_t>(CONFIG_NFC_MISO_GPIO),
-                .mosi  = static_cast<gpio_num_t>(CONFIG_NFC_MOSI_GPIO),
-                .sck   = static_cast<gpio_num_t>(CONFIG_NFC_SCK_GPIO),
-                .cs    = static_cast<gpio_num_t>(CONFIG_NFC_CS_GPIO)
-            }));
+        ESP_ERROR_CHECK(nfc_reader.init(nfc_gpio_t {
+            .miso  = static_cast<gpio_num_t>(CONFIG_NFC_MISO_GPIO),
+            .mosi  = static_cast<gpio_num_t>(CONFIG_NFC_MOSI_GPIO),
+            .sck   = static_cast<gpio_num_t>(CONFIG_NFC_SCK_GPIO),
+            .cs    = static_cast<gpio_num_t>(CONFIG_NFC_CS_GPIO)
+        }));
 
-            while (true) {
-                // stop thread and capture nfc infomation
-                nfc_tag_t tag;
-                nfc_read_state_t state = nfc_reader.wait_for_tag(tag);
+        nfc_tag_t::uid_t previous_tag;
 
-                // have we atleast got information to work with?
-                if (state != nfc_read_state_t::fail) {
-                    ndef_record_view_t record = tag.get_record();
-                    
-                    if (record.type == "rail") {
-                        // read the payload data
-                        auto rail = rail_nfc_t::deserialise(record.payload);
+        while (true) {
+            // stop thread and capture nfc infomation
+            nfc_tag_t tag;
+            nfc_read_state_t state = nfc_reader.wait_for_tag(tag);
+            
+            // don't bother doing the next instructions we haven't scanned anything useful
+            if (state == nfc_read_state_t::fail) continue;
 
-                        // notify server
-                        tcp_send_event_t::send(tcp_event_data_t(
-                            common::rail_location_t {
-                                .id = train_id,
-                                .rail_id = rail.rail_id,
-                                .type = rail.type
-                            }
-                        ));
+            // have we scanned the same tag?
+            if (tag.uid_equals(previous_tag)) continue;
 
-                        // notify train controller
-                        rail_command_t::send(rail.rail_id);
-                    }
-                }
-            }
+            // remember this tag 
+            std::copy(tag.get_uid().begin(), tag.get_uid().end(), previous_tag.begin());
 
-            vTaskDelete(nullptr);
+            process_tag(train_id, tag);
         }
+
+        vTaskDelete(nullptr);
+    }
+
+    void nfc_task_t::process_tag(common::esp_id_t id, const nfc_tag_t& tag) {
+        ndef_record_view_t record = tag.get_record();
+                
+        if (record.type == "rail") {
+            // read the payload data
+            const auto rail = rail_nfc_t::deserialise(record.payload);
+
+            // notify server
+            tcp_send_event_t::send(tcp_event_data_t(
+                common::rail_location_t {
+                    .id = id,
+                    .rail_id = rail.rail_id,
+                    .type = rail.type
+                }
+            ));
+
+            // notify train controller
+            rail_command_t::send(rail.rail_id);
+        }
+    }
 }
