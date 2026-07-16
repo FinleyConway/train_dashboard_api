@@ -78,8 +78,6 @@ namespace client {
     }
 
     void tcp_manager_task_t::on_init_request(const common::esp_init_request_t& init_request) {
-        ESP_LOGI(c_tag, "Received server response, sending ack...");
-
         tcp_send_event_t::send(tcp_event_data_t(
             common::esp_init_response_t {
                 .id = init_request.id

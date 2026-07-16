@@ -1,5 +1,4 @@
 #include "components/nfc_tag.hpp"
-#include "nfc_tag.hpp"
 
 namespace client {
     nfc_tag_t::nfc_tag_t(NTAG2XX_MODEL ntag_model) : m_ntag_model(ntag_model) {
@@ -19,8 +18,7 @@ namespace client {
         m_read_bytes = read_bytes;
     }
 
-    NTAG2XX_MODEL nfc_tag_t::get_model() const
-    {
+    NTAG2XX_MODEL nfc_tag_t::get_model() const {
         return m_ntag_model;
     }
 
@@ -29,9 +27,7 @@ namespace client {
     }
 
     ndef_record_view_t nfc_tag_t::get_record() const {
-        return ndef_parser_t::parse(
-            std::span<const uint8_t>(m_data.data(), m_read_bytes)
-        );
+        return ndef_parser_t::parse({ m_data.data(), m_read_bytes });
     }
 
     bool nfc_tag_t::uid_equals(const uid_t& uid) const {

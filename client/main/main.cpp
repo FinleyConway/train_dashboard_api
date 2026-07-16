@@ -1,60 +1,6 @@
-#include <esp_err.h>
-#include <esp_log.h>
-#include <sdkconfig.h>
-
-#include "networking/wifi/wifi.hpp"
-#include "networking/wifi/provisioning/provisioning.hpp"
-
-#include "task_events/tcp/tcp_send_event.hpp"
-#include "task_events/motor_command.hpp"
-#include "task_events/rail_command.hpp"
-#include "task_events/station_command.hpp"
-
-#include "tasks/tcp/tcp_manager_task.hpp"
-#include "tasks/motor_task.hpp"
-#include "tasks/nfc_task.hpp"
-#include "tasks/train_controller_task.hpp"
-
-void connection_handle(bool has_connected) {
-    if (has_connected) {
-        ESP_LOGI("main", "Connected!");
-
-        // restart the esp to take advantage of nvs
-        esp_restart();
-    }
-    else {
-        ESP_LOGI("main", "Given creds werent correct, try again!");
-    }
-}
+#include "application.hpp"
 
 extern "C" void app_main() {
-    static client::wifi_t wifi;
-
-    ESP_ERROR_CHECK(wifi.connect_from_nvs());
-
-    if (!wifi.wait_connection()) {
-        client::provisioning_t wifi_prov(wifi);
-
-        wifi_prov.start(
-            CONFIG_WIFI_AP_SSID,
-            CONFIG_WIFI_AP_PASSWORD,
-            CONFIG_WIFI_AP_MAX_CONNECTIONS
-        );
-        wifi_prov.wait_connection(connection_handle);
-    }
-
-    ESP_LOGI("main", "connected");
-
-    // init task events
-    ESP_ERROR_CHECK(client::tcp_send_event_t::init());
-    ESP_ERROR_CHECK(client::motor_command_t::init());
-    ESP_ERROR_CHECK(client::rail_command_t::init());
-    ESP_ERROR_CHECK(client::station_command_t::init());
-
-    // init tasks
-    client::tcp_manager_task_t::init([](common::esp_id_t id) {
-        client::motor_task_t::init(1);
-        client::nfc_task_t::init(id);
-        client::train_controller_task_t::init();
-    });
+    static client::application_t app;
+    app.run();
 }
