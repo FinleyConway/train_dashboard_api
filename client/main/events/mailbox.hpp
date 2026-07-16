@@ -1,6 +1,7 @@
 #pragma once
 
 #include <freertos/FreeRTOS.h>
+#include <esp_log.h>
 
 namespace client {
     template<typename T>
@@ -34,5 +35,5 @@ namespace client {
 
     private:
         QueueHandle_t m_event = nullptr;
-    }
+    };
 }

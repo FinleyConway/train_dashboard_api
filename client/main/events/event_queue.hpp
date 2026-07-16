@@ -1,6 +1,7 @@
 #pragma once
 
 #include <freertos/FreeRTOS.h>
+#include <esp_log.h>
 
 namespace client {
     template<typename T>
@@ -25,15 +26,11 @@ namespace client {
         event_queue_t& operator=(event_queue_t&&) noexcept = default;
 
         bool send(const T& data, TickType_t block_tick = 0) {
-            configASSERT(s_event);
-
-            return xQueueSend(s_event, &data, block_tick) == pdPASS;
+            return xQueueSend(m_event, &data, block_tick) == pdPASS;
         }
 
         bool receive(T& data_ref, TickType_t timeout_tick = portMAX_DELAY) {
-            configASSERT(s_event);
-
-            return xQueueReceive(s_event, &data_ref, timeout_tick) == pdPASS;
+            return xQueueReceive(m_event, &data_ref, timeout_tick) == pdPASS;
         }
 
     private:

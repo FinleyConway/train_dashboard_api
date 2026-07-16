@@ -10,10 +10,8 @@ idf_component_register(
         "."
         "networking"
         "networking/wifi"
-        "task_events"
-        "task_events/tcp"
+        "events"
         "tasks"
-        "tasks/tcp"
         "../../common/src" # should be fine as common is header only
 )
 

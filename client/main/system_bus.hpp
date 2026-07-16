@@ -2,11 +2,11 @@
 
 #include <sdkconfig.h>
 
-#include "task_events/mailbox.hpp"
-#include "task_events/event_queue.hpp"
+#include "events/mailbox.hpp"
+#include "events/event_queue.hpp"
 
 #include "common/api/types.hpp"
-#include "commom/messages/motor.hpp"
+#include "common/messages/motor.hpp"
 #include "utils/tcp_event_data.hpp"
 
 namespace client {
