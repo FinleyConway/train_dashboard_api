@@ -8,10 +8,19 @@ idf_component_register(
 
     INCLUDE_DIRS
         "."
-        "networking"
-        "networking/wifi"
-        "events"
-        "tasks"
+        "app"
+        "motor/modules"
+        "motor/tasks"
+        "nfc/modules"
+        "nfc/parser"
+        "nfc/tasks"
+        "rtos"
+        "tcp"
+        "tcp/message_handling"
+        "tcp/tasks"
+        "train_controller"
+        "wifi"
+        "wifi/provisioning"
         "../../common/src" # should be fine as common is header only
 )
 
