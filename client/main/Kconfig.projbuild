@@ -77,5 +77,14 @@ menu "Train ESP Client"
                 int "Cs pin"
                 default 5
         endmenu
+
+        menu "Train Controller"
+            config TRAIN_TASK_STACK
+                int "Task stack size (words)"
+                default 1024
+            config TRAIN_TASK_PRIORITY
+                int "Task priority"
+                default 3
+        endmenu
     endmenu
 endmenu

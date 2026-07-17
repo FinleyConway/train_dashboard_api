@@ -1,5 +1,7 @@
 #include "tasks/train_controller_task.hpp"
 
+#include <sdkconfig.h>
+
 #include "system_bus.hpp"
 #include "common/api/types.hpp"
 #include "common/messages/motor.hpp"
@@ -15,16 +17,12 @@ namespace client {
     }
 
     void train_controller_task_t::init() {
-        if (m_handle != nullptr) {
-            vTaskDelete(m_handle);
-        }
-
         xTaskCreate(
             run_wrapper,
             "train_controller_task_t",
-            4096, // TODO: Add config
+            CONFIG_TRAIN_TASK_STACK, 
             this,
-            3, // TODO: Add config
+            CONFIG_TRAIN_TASK_PRIORITY, 
             &m_handle
         );
     }
