@@ -26,6 +26,30 @@ menu "Train ESP Client"
                 int "Timeout reconnect wait"
                 default 30
         endmenu
+        
+        menu "Motor"
+            config MOTOR_TASK_STACK
+                int "Task stack size (words)"
+                default 2048
+            config MOTOR_TASK_PRIORITY
+                int "Task priority"
+                default 3
+            config MOTOR_PWM_CHANNEL
+                int "Pwm channel"
+                default 0
+            config MOTOR_PWM_GPIO
+                int "Pwm pin"
+                default 33
+            config MOTOR_AIN_A_GPIO
+                int "Ain A pin"
+                default 26
+            config MOTOR_AIN_B_GPIO
+                int "Ain B pin"
+                default 32
+            config MOTOR_STANDBY_GPIO
+                int "Standby pin"
+                default 25
+        endmenu
 
         menu "NFC"
             config NFC_TASK_STACK

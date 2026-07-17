@@ -3,6 +3,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include <sdkconfig.h>
+
 #include "system_bus.hpp"
 
 namespace client {
@@ -16,16 +18,12 @@ namespace client {
     }
 
     void motor_task_t::init() {
-        if (m_handle != nullptr) {
-            vTaskDelete(m_handle);
-        }
-
         xTaskCreate(
             run_wrapper,
             "motor_task_t",
-            2048, // TODO: Add config
+            CONFIG_MOTOR_TASK_STACK,
             this,
-            3, // TODO: Add config
+            CONFIG_MOTOR_TASK_PRIORITY,
             &m_handle
         );
     }
@@ -37,11 +35,11 @@ namespace client {
 
     void motor_task_t::run() {
         m_motor.init(motor_gpio_t {
-            .pwm_channel = LEDC_CHANNEL_0, // TODO: Add config
-            .pwm = GPIO_NUM_33,
-            .ain_a = GPIO_NUM_26,
-            .ain_b = GPIO_NUM_32,
-            .standby = GPIO_NUM_25
+            .pwm_channel = static_cast<ledc_channel_t>(CONFIG_MOTOR_PWM_CHANNEL),
+            .pwm         = static_cast<gpio_num_t>(CONFIG_MOTOR_PWM_GPIO),
+            .ain_a       = static_cast<gpio_num_t>(CONFIG_MOTOR_AIN_A_GPIO),
+            .ain_b       = static_cast<gpio_num_t>(CONFIG_MOTOR_AIN_B_GPIO),
+            .standby     = static_cast<gpio_num_t>(CONFIG_MOTOR_STANDBY_GPIO)
         });
 
         while (true) {
