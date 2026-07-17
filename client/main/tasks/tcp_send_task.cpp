@@ -1,5 +1,7 @@
 #include "tasks/tcp_send_task.hpp"
 
+#include <sdkconfig.h>
+
 #include "system_bus.hpp"
 #include "tasks/tcp_manager_task.hpp"
 #include "utils/tcp_event_data.hpp"
@@ -21,9 +23,9 @@ namespace client {
         xTaskCreate(
             run_wrapper,
             "tcp_send_task_t",
-            8192, // TODO: Add config
+            CONFIG_TCP_TASK_STACK, 
             this,
-            5, // priority // TODO: Add config (or add +2 from manager)
+            CONFIG_TCP_TASK_PRIORITY + 2,
             &m_handle
         );
     }

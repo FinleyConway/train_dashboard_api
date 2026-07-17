@@ -1,5 +1,7 @@
 #include "tasks/tcp_listen_task.hpp"
 
+#include <sdkconfig.h>
+
 #include "tasks/tcp_manager_task.hpp"
 
 namespace client {
@@ -19,9 +21,9 @@ namespace client {
         xTaskCreate(
             run_wrapper,
             "tcp_listen_task_t",
-            8192, // TODO: ADD CONFIG
+            CONFIG_TCP_TASK_STACK, 
             this,
-            5, // priority
+            CONFIG_TCP_TASK_PRIORITY + 2,
             &m_handle
         );
     }

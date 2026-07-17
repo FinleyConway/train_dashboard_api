@@ -19,6 +19,12 @@ menu "Train ESP Client"
 
     menu "RTOS Tasks"
         menu "TCP"
+            config TCP_TASK_STACK
+                int "Task stack size (words)"
+                default 8192
+            config TCP_TASK_PRIORITY
+                int "Task priority"
+                default 3
             config TCP_TIMEOUT_ATTEMPTS
                 int "Timeout retry attempts"
                 default 3

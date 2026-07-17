@@ -27,9 +27,9 @@ namespace client {
         xTaskCreate(
             run_wrapper,
             "tcp_task_t",
-            8192, // TODO: Add config
+            CONFIG_TCP_TASK_STACK, 
             this,
-            3, // TODO: Add config (or add +2 from manager)
+            CONFIG_TCP_TASK_PRIORITY,
             &m_handle
         );
     }
