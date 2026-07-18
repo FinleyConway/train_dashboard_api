@@ -8,7 +8,7 @@ namespace common {
 
     enum class rail_type_t : uint8_t {
         none = 0,
-        horizontal,
+        straight,
         left_curve,
         right_curve,
         left_junction,

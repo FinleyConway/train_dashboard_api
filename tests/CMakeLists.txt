@@ -11,5 +11,6 @@ target_link_libraries(unit_tests PRIVATE
     common
 )
 
+
 include(Catch)
 catch_discover_tests(unit_tests)
