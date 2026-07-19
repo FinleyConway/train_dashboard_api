@@ -94,23 +94,29 @@ namespace host {
             return std::nullopt;
         }
 
-        // uint32_t get_distance() const {
-
-        // }
-
-    private:
         bool exists(common::rail_id_t id) const {
             return m_rail_lookup.contains(id);
         }
 
+        const rail_t* get(common::rail_id_t id) const {
+            const rail_location_t& location = locate(id);
+
+            return m_tracks[location.track].get(location.position);
+        }
+
+        const rail_t* get(const rail_branch_t& branch) const {
+            return m_tracks[branch.track].get(branch.position);
+        }
+
+    private:
         const rail_location_t& locate(common::rail_id_t id) const {
             return m_rail_lookup.at(id);
         }
 
         bool is_junction(common::rail_type_t type) const {
             return (
-                type != common::rail_type_t::left_junction ||
-                type != common::rail_type_t::right_junction
+                type == common::rail_type_t::left_junction ||
+                type == common::rail_type_t::right_junction
             );
         }
 
