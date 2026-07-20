@@ -4,7 +4,7 @@
 #include <variant>
 #include <optional>
 
-#include "host/rail_network/rail.hpp"
+#include "host/rail_network/storage/rail.hpp"
 #include "common/api/types.hpp"
 
 namespace host {
@@ -29,12 +29,12 @@ namespace host {
             return m_rails[position];
         }
 
-        bool add_branch(size_t index, const rail_branch_t& branch) {
-            if (index >= m_rails.size()) {
+        bool add_branch(size_t position, const rail_branch_t& branch) {
+            if (position >= m_rails.size()) {
                 return false;
             }
 
-            m_rails.at(index).branch = branch;
+            m_rails.at(position).branch = branch;
 
             return true;
         }
@@ -53,10 +53,6 @@ namespace host {
 
     private:
         std::vector<rail_t> m_rails;
-
-        // null -> no connection, end of rail
-        // same index as track -> loops
-        // different index -> moves to different track
         std::optional<size_t> m_track_connection;
     };
 }

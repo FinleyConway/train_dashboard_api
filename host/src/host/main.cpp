@@ -61,11 +61,9 @@ int main() {
         .next_type = common::rail_type_t::right_curve,
     });
 
-    auto rail_opt = network.get_next_rail(1);
+    std::vector<common::rail_id_t> path = network.generate_path(4, 3);
 
-    if (rail_opt.has_value()) {
-        auto rail = rail_opt.value();
-
+    for (auto rail : path) {
         std::cout << rail << std::endl;
     }
 }

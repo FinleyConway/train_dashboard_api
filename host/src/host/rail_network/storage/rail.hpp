@@ -5,8 +5,6 @@
 #include "common/api/types.hpp"
 
 namespace host {
-    class track_t;
-
     struct rail_branch_t {
         size_t track = 0;
         size_t position = 0;
