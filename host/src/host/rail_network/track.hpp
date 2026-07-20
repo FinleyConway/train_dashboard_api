@@ -21,12 +21,12 @@ namespace host {
             });
         }
 
-        const rail_t* get(size_t index) const {
-            if (index >= m_rails.size()) {
-                return nullptr;
-            }
+        bool has(size_t position) const {
+            return m_rails.size() > position;
+        }
 
-            return &m_rails[index];
+        const rail_t& get(size_t position) const {
+            return m_rails[position];
         }
 
         bool add_branch(size_t index, const rail_branch_t& branch) {

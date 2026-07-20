@@ -61,12 +61,12 @@ namespace host {
             common::rail_id_t next_rail = next_rail_opt.value();
 
             // does this rail have a branch to explore?
-            const rail_t* rail_obj = m_network.get(next_rail);
+            const rail_t& rail_obj = m_network.get_from_id(next_rail);
 
-            if (rail_obj->has_branch()) {
-                const rail_t* branch_rail_obj = m_network.get(rail_obj->branch);
+            if (rail_obj.has_branch()) {
+                const rail_t& branch_rail_obj = m_network.get_from_branch(rail_obj.branch);
 
-                return { next_rail, branch_rail_obj->id };
+                return { next_rail, branch_rail_obj.id };
             }
 
             return { next_rail, std::nullopt };

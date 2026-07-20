@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include "host/rail_network/rail_pathing.hpp"
 #include "host/rail_network/track.hpp"
 #include "host/rail_network/rail.hpp"
 #include "common/api/types.hpp"
@@ -59,13 +60,13 @@ namespace host {
             const track_t& track = m_tracks[location.track];
 
             // try next rail on the same track
-            if (const rail_t* next_rail = track.get(location.position + 1)) {
-                return next_rail->id;
+            const size_t location_offset = location.position + 1;
+            if (track.has(location_offset)) {
+                return track.get(location_offset).id;
             }
 
             // no more rails on this track, try connection
             const std::optional<size_t> connection = track.get_track_connections();
-
             if (!connection.has_value()) {
                 return std::nullopt;
             }
@@ -75,19 +76,20 @@ namespace host {
 
             // is the track a loop?
             if (connected_track_index == location.track) {
-                if (const rail_t* first_rail = connected_track.get(0)) {
-                    return first_rail->id;
+                if (connected_track.has(0)) {
+                    return connected_track.get(0).id;
                 }
 
                 return std::nullopt;
             }
 
             // get the branching track
-            if (const rail_t* rail = track.get(location.position)) {
-                const rail_branch_t& branch = rail->branch;
+            if (track.has(location.position)) {
+                const rail_t& rail = track.get(location.position);
+                const rail_branch_t& branch = rail.branch;
 
-                if (const rail_t* connected_rail = connected_track.get(branch.position)) {
-                    return connected_rail->id;
+                if (connected_track.has(branch.position)) {
+                    return connected_track.get(branch.position).id;
                 }
             }
 
@@ -98,13 +100,13 @@ namespace host {
             return m_rail_lookup.contains(id);
         }
 
-        const rail_t* get(common::rail_id_t id) const {
+        const rail_t& get_from_id(common::rail_id_t id) const {
             const rail_location_t& location = locate(id);
 
             return m_tracks[location.track].get(location.position);
         }
 
-        const rail_t* get(const rail_branch_t& branch) const {
+        const rail_t& get_from_branch(const rail_branch_t& branch) const {
             return m_tracks[branch.track].get(branch.position);
         }
 
