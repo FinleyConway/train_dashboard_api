@@ -12,6 +12,7 @@
 #include "common/messages/headlight.hpp"
 #include "common/messages/rail_location.hpp"
 #include "common/messages/rail_destination.hpp"
+#include "common/messages/battery_status.hpp"
 
 namespace host {
     application_t::application_t()
@@ -49,6 +50,12 @@ namespace host {
         m_tcp_server.register_receive_callback<common::rail_location_t>(
             [&](const common::rail_location_t& location) {
                 LOG_INFO("Train id: {}, Rail id: {}, type: {}", location.id, location.rail_id, static_cast<int>(location.type));
+            }
+        );
+
+        m_tcp_server.register_receive_callback<common::battery_status_t>(
+            [&](const common::battery_status_t& battery_status) {
+                LOG_INFO("Train id: {}, Battery: {}", battery_status.id, battery_status.percentage_level);
             }
         );
     }

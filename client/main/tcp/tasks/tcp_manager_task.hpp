@@ -2,6 +2,7 @@
 
 #include <freertos/FreeRTOS.h>
 
+#include "tcp/message_handling/tcp_message_handler.hpp"
 #include "tcp/tasks/tcp_send_task.hpp"
 #include "tcp/tasks/tcp_listen_task.hpp"
 #include "tcp/tcp_client.hpp"
@@ -11,7 +12,7 @@ namespace client {
 
     class tcp_manager_task_t {
     public:
-        tcp_manager_task_t(system_bus_t& system_bus);
+        tcp_manager_task_t(system_bus_t& system_bus, void* ctx, connection_callback_t callback);
         ~tcp_manager_task_t();
 
         tcp_manager_task_t(const tcp_manager_task_t&) = delete;
