@@ -4,9 +4,9 @@
 
 namespace client {
     motor_t::~motor_t() {
-        gpio_reset_pin(m_gpio.ain_a);
-        gpio_reset_pin(m_gpio.ain_b);
-        gpio_reset_pin(m_gpio.standby);
+        ESP_ERROR_CHECK_WITHOUT_ABORT(gpio_reset_pin(m_gpio.ain_a));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(gpio_reset_pin(m_gpio.ain_b));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(gpio_reset_pin(m_gpio.standby));
     }
 
     void motor_t::init(const motor_gpio_t& gpio) {
@@ -31,18 +31,18 @@ namespace client {
         ESP_ERROR_CHECK(ledc_channel_config(&cfg));
 
         // setup driver 
-        gpio_set_direction(gpio.ain_a, GPIO_MODE_OUTPUT);
-        gpio_set_direction(gpio.ain_b, GPIO_MODE_OUTPUT);
-        gpio_set_direction(gpio.standby, GPIO_MODE_OUTPUT);
+        ESP_ERROR_CHECK(gpio_set_direction(gpio.ain_a, GPIO_MODE_OUTPUT));
+        ESP_ERROR_CHECK(gpio_set_direction(gpio.ain_b, GPIO_MODE_OUTPUT));
+        ESP_ERROR_CHECK(gpio_set_direction(gpio.standby, GPIO_MODE_OUTPUT));
 
         // enable driver
-        gpio_set_level(gpio.standby, true);
+        ESP_ERROR_CHECK(gpio_set_level(gpio.standby, true));
     }
 
     void motor_t::set_active_state(bool is_active) {
         m_is_active = is_active;
 
-        gpio_set_level(m_gpio.standby, is_active);
+        ESP_ERROR_CHECK(gpio_set_level(m_gpio.standby, is_active));
 
         ESP_LOGI(c_tag, "Motor active: %d", is_active);
 
@@ -68,16 +68,16 @@ namespace client {
 
     void motor_t::set_motor_direction(motor_direction_t direction) {
         if (direction == motor_direction_t::clockwise) {
-            gpio_set_level(m_gpio.ain_a, true);
-            gpio_set_level(m_gpio.ain_b, false);
+            ESP_ERROR_CHECK(gpio_set_level(m_gpio.ain_a, true));
+            ESP_ERROR_CHECK(gpio_set_level(m_gpio.ain_b, false));
         }
         else if (direction == motor_direction_t::counter_clockwise) {
-            gpio_set_level(m_gpio.ain_a, false);
-            gpio_set_level(m_gpio.ain_b, true);
+            ESP_ERROR_CHECK(gpio_set_level(m_gpio.ain_a, false));
+            ESP_ERROR_CHECK(gpio_set_level(m_gpio.ain_b, true));
         }
         else if (direction == motor_direction_t::none) {
-            gpio_set_level(m_gpio.ain_a, false);
-            gpio_set_level(m_gpio.ain_b, false);
+            ESP_ERROR_CHECK(gpio_set_level(m_gpio.ain_a, false));
+            ESP_ERROR_CHECK(gpio_set_level(m_gpio.ain_b, false));
         }
         else return;
 

@@ -2,8 +2,10 @@
 #include "host/rail_network/rail_network.hpp"
 
 int main() {
-    //host::application_t app;
-    //app.start();
+    host::application_t app;
+    app.start();
+
+    return 0;
 
     host::rail_network_t network;
 
