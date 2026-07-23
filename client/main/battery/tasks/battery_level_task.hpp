@@ -57,7 +57,7 @@ namespace client {
                 );
 
                 ESP_LOGI("battery_task", "Battery is current (mV): %d full", millivolts);
-                ESP_LOGI("battery_task", "Battery is current: %.1f% full", percentage);
+                ESP_LOGI("battery_task", "Battery is current: %.1f full", percentage);
 
                 vTaskDelay(pdMS_TO_TICKS(300000)); // block thread for 5 minutes
             }
@@ -92,7 +92,7 @@ namespace client {
         void setup_adc()
         {
             adc_oneshot_unit_init_cfg_t init_cfg;
-            init_cfg.unit_id = static_cast<adc_unit_t>(CONFIG_BATTERY_ADC_UNIT);
+            init_cfg.unit_id = ADC_UNIT_1;
             init_cfg.clk_src = ADC_RTC_CLK_SRC_DEFAULT;
 
             ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_cfg, &m_adc_handle));
@@ -104,7 +104,7 @@ namespace client {
 
             ESP_ERROR_CHECK(adc_oneshot_config_channel(
                 m_adc_handle,
-                static_cast<adc_channel_t>(CONFIG_BATTERY_ADC_CHANNEL),
+                ADC_CHANNEL_6,
                 &chan_cfg
             ));
 
@@ -131,7 +131,7 @@ namespace client {
                 ESP_ERROR_CHECK(
                     adc_oneshot_read(
                         m_adc_handle,
-                        static_cast<adc_channel_t>(CONFIG_BATTERY_ADC_CHANNEL),
+                        ADC_CHANNEL_6,
                         &raw
                     )
                 );
