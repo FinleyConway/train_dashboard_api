@@ -41,15 +41,15 @@ namespace host {
         }
 
         rail_status_t create_track(const rail_connection_t& connection) {
-            if (m_rail_lookup.contains(connection.next)) {
+            if (m_rail_lookup.contains(connection.next.id)) {
                 return rail_status_t::rail_already_exists;
             }
 
             // create a new track with an inital track piece
-            m_tracks.emplace_back(connection.next, connection.next_type);
+            m_tracks.emplace_back(connection.next.id, connection.next.type);
 
             // add rail
-            m_rail_lookup.emplace(connection.next, location_t {
+            m_rail_lookup.emplace(connection.next.id, location_t {
                 .track = m_tracks.size() - 1,
                 .position = 0 // first rail in the newly created track
             });
@@ -58,11 +58,11 @@ namespace host {
         }
 
         rail_status_t append_to_track(const rail_connection_t& connection) {
-            if (exists(connection.next)) {
+            if (exists(connection.next.id)) {
                 return rail_status_t::rail_already_exists;
             }
 
-            const location_t& location = m_rail_lookup.at(connection.previous);
+            const location_t& location = m_rail_lookup.at(connection.previous.id);
 
             track_t& track = m_tracks[location.track];
             const size_t index = track.size();
@@ -71,10 +71,10 @@ namespace host {
                 return create_branch(location, connection);
             }
 
-            track.add(connection.next, connection.next_type);
+            track.add(connection.next.id, connection.next.type);
 
             m_rail_lookup.emplace(
-                connection.next, 
+                connection.next.id, 
                 location_t {
                     .track = location.track,
                     .position = index
@@ -85,8 +85,8 @@ namespace host {
         }
 
         rail_status_t connect_tracks(const rail_connection_t& connection) {
-            const location_t& next = m_rail_lookup.at(connection.next);
-            const location_t& previous = m_rail_lookup.at(connection.previous);
+            const location_t& next = m_rail_lookup.at(connection.next.id);
+            const location_t& previous = m_rail_lookup.at(connection.previous.id);
 
             // it loops
             if (next.track == previous.track) {
@@ -168,7 +168,7 @@ namespace host {
 
         rail_status_t create_branch(const location_t& location, const rail_connection_t& connection) {
             // can the previous type actually branch?
-            if (!is_junction(connection.previous_type)) return rail_status_t::invalid_connection;
+            if (!is_junction(connection.previous.type)) return rail_status_t::invalid_connection;
 
             rail_status_t ret = create_track(connection);
             if (ret != rail_status_t::success) {

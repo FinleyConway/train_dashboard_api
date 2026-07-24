@@ -14,17 +14,17 @@ namespace host {
 
         rail_status_t append_rail(const rail_connection_t& connection) {
             // are we starting from a new track?
-            if (connection.previous_type == common::rail_type_t::none) {
+            if (!connection.has_rail_pivot()) {
                 return m_storage.create_track(connection);
             }
 
             // does the rail reference point exist?
-            if (!m_storage.exists(connection.previous)) {
+            if (!m_storage.exists(connection.previous.id)) {
                 return rail_status_t::no_previous_rail;
             }
 
             // are we evaluating rails on the same track? 
-            if (m_storage.exists(connection.next) && m_storage.exists(connection.previous))
+            if (m_storage.exists(connection.next.id) && m_storage.exists(connection.previous.id))
                 return m_storage.connect_tracks(connection);
 
             // just add rail to track
