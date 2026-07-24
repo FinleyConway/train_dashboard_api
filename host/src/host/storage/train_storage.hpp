@@ -5,23 +5,17 @@
 #include <nlohmann/json.hpp>
 
 #include "common/api/types.hpp"
-#include "common/messages/motor.hpp"
 
 namespace host {
     struct storage_t {
         uint32_t current_motor_duty = 0;
         bool is_motor_active = false;
-
-        uint16_t headlight_brightness = 0;
-        bool is_headlight_active = false;
     };
 
     inline void to_json(nlohmann::json& j, const storage_t & e) {
         j = {
             {"current_motor_duty", e.current_motor_duty},
             {"is_motor_active", e.is_motor_active},
-            {"headlight_brightness", e.headlight_brightness},
-            {"is_headlight_active", e.is_headlight_active}
         };
     }
 

@@ -8,7 +8,7 @@
 #include "host/logging/logger.hpp"
 
 #include "common/api/types.hpp"
-#include "common/messages/motor.hpp"
+#include "common/messages/motor_control.hpp"
 
 namespace host {
     class motor_endpoint_t {

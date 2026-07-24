@@ -5,11 +5,9 @@
 #include "host/networking/http/endpoints/ping_endpoint.hpp"
 #include "host/networking/http/endpoints/train_endpoint.hpp"
 #include "host/networking/http/endpoints/motor_endpoint.hpp"
-#include "host/networking/http/endpoints/headlight_endpoint.hpp"
 
 #include "common/messages/handshake.hpp"
-#include "common/messages/motor.hpp"
-#include "common/messages/headlight.hpp"
+#include "common/messages/motor_control.hpp"
 #include "common/messages/rail_location.hpp"
 #include "common/messages/rail_destination.hpp"
 #include "common/messages/battery_status.hpp"
@@ -77,12 +75,6 @@ namespace host {
             m_tcp_server,
             m_http_server,
             "/api/motor_control"
-        );
-
-        headlight_endpoint_t::init(
-            m_tcp_server,
-            m_http_server,
-            "/api/headlight_control"
         );
 
         m_http_server.Post("/api/station_request", [&](const httplib::Request& req, httplib::Response& res) {
