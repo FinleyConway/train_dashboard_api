@@ -8,6 +8,7 @@
 
 #include "common/messages/handshake.hpp"
 #include "common/messages/motor_control.hpp"
+#include "common/messages/motor_status.hpp"
 #include "common/messages/rail_location.hpp"
 #include "common/messages/rail_destination.hpp"
 #include "common/messages/battery_status.hpp"
@@ -42,6 +43,12 @@ namespace host {
         m_tcp_server.register_receive_callback<common::esp_init_response_t>(
             [&](const common::esp_init_response_t& res) {
                 m_handshake.on_response_received(res);
+            }
+        );
+
+        m_tcp_server.register_receive_callback<common::motor_status_t>(
+            [&](const common::motor_status_t& motor) {
+                LOG_INFO("Train id: {}, Current Duty: {}, Is Active: {}", motor.id, motor.current_duty, motor.is_active);
             }
         );
 
