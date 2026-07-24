@@ -49,18 +49,24 @@ namespace host {
         m_tcp_server.register_receive_callback<common::motor_status_t>(
             [&](const common::motor_status_t& motor) {
                 LOG_INFO("Train id: {}, Current Duty: {}, Is Active: {}", motor.id, motor.current_duty, motor.is_active);
+
+                m_train_storage.update_motor_status(motor.id, motor.current_duty, motor.is_active);
             }
         );
 
         m_tcp_server.register_receive_callback<common::rail_location_t>(
             [&](const common::rail_location_t& location) {
                 LOG_INFO("Train id: {}, Rail id: {}, type: {}", location.id, location.rail_id, static_cast<int>(location.type));
+
+                m_train_storage.update_track_position(location.id, location.rail_id, location.type);
             }
         );
 
         m_tcp_server.register_receive_callback<common::battery_status_t>(
             [&](const common::battery_status_t& battery_status) {
                 LOG_INFO("Train id: {}, Battery: {}", battery_status.id, battery_status.percentage_level);
+
+                m_train_storage.update_battery_level(battery_status.id, battery_status.percentage_level);
             }
         );
     }
