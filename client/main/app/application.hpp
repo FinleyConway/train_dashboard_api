@@ -15,6 +15,8 @@
 
 #include "common/api/types.hpp"
 
+#include "train_controller/passive_buzzer.hpp"
+
 namespace client {
     class application_t {
     public:
@@ -25,7 +27,6 @@ namespace client {
             m_nfc_task(m_bus),
             m_train_controller_task(m_bus) 
         {
-            ESP_LOGI("CHIP", "Target: %s", CONFIG_IDF_TARGET);
         }
 
         void run() {
@@ -39,7 +40,7 @@ namespace client {
                 on_wifi_prov_response(false); 
 
                 client::provisioning_t wifi_prov(wifi);
-
+                
                 // provide and wait for provided network creds through AP
                 wifi_prov.start(
                     CONFIG_WIFI_AP_SSID,

@@ -18,6 +18,10 @@ namespace client {
     }
 
     void motor_task_t::init() {
+        if (m_handle != nullptr) {
+            return;
+        }
+
         xTaskCreate(
             run_wrapper,
             "motor_task_t",

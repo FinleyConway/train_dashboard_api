@@ -18,6 +18,10 @@ namespace client {
     }
 
     void nfc_task_t::init() {
+        if (m_handle != nullptr) {
+            return;
+        }
+
         xTaskCreate(
             run_wrapper,
             "nfc_task_t",

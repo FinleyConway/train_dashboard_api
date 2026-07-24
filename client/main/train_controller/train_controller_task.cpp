@@ -17,6 +17,10 @@ namespace client {
     }
 
     void train_controller_task_t::init() {
+        if (m_handle != nullptr) {
+            return;
+        }
+
         xTaskCreate(
             run_wrapper,
             "train_controller_task_t",

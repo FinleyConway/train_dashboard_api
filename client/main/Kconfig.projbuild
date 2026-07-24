@@ -36,16 +36,10 @@ menu "Train ESP Client"
         menu "Battery Status"
             config BATTERY_TASK_STACK
                 int "Task stack size (words)"
-                default 1024
+                default 4096
             config BATTERY_TASK_PRIORITY
                 int "Task priority"
                 default 1
-            config BATTERY_ADC_UNIT
-                int "ADC unit gpio"
-                default 1
-            config BATTERY_ADC_CHANNEL
-                int "ADC channel gpio"
-                default 6
             config BATTERY_FULLY_CHARGED
                 float "Fully charged voltage"
                 default 8.4
