@@ -6,7 +6,7 @@
 #include "rtos/event_queue.hpp"
 
 #include "common/api/types.hpp"
-#include "common/messages/motor.hpp"
+#include "common/messages/motor_control.hpp"
 #include "tcp/message_handling/tcp_event_data.hpp"
 
 namespace client {

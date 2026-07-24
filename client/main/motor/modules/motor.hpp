@@ -43,7 +43,7 @@ namespace client {
         void set_motor_direction(motor_direction_t direction);
 
         void set_motor_duty(uint32_t duty);
-    
+        
     private:
         motor_gpio_t m_gpio;
         motor_direction_t m_current_direction = motor_direction_t::clockwise;

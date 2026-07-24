@@ -3,7 +3,7 @@
 #include <freertos/FreeRTOS.h>
 
 #include "motor/modules/motor.hpp"
-#include "common/messages/motor.hpp"
+#include "common/messages/motor_control.hpp"
 
 namespace client {
     struct system_bus_t;
@@ -28,6 +28,8 @@ namespace client {
         void run();
 
         void adjust_motor(const common::motor_control_t& motor_control);
+
+        void send_motor_status();
 
         static float ease(float x);
 

@@ -2,6 +2,7 @@
 
 #include "common/messages/handshake.hpp"
 #include "common/messages/rail_location.hpp"
+#include "common/messages/motor_status.hpp"
 #include "common/messages/battery_status.hpp"
 
 #include "tcp/tcp_client.hpp"
@@ -20,6 +21,7 @@ namespace client {
         union data_t {
             common::esp_init_response_t init_respond;
             common::rail_location_t rail_location;
+            common::motor_status_t motor_status;
             common::battery_status_t battery_status;
         };
     
@@ -32,6 +34,10 @@ namespace client {
 
         explicit tcp_event_data_t(const common::rail_location_t& value) : m_type(tcp_event_type_t::rail_location) {
             m_data.rail_location = value;
+        }
+
+        explicit tcp_event_data_t(const common::motor_status_t& value) : m_type(tcp_event_type_t::motor_status) {
+            m_data.motor_status = value;
         }
 
         explicit tcp_event_data_t(const common::battery_status_t& value) : m_type(tcp_event_type_t::battery_status) {
@@ -51,6 +57,7 @@ namespace client {
             switch (m_type) {
                 case tcp_event_type_t::init_respond: return client.send_to_server(m_data.init_respond);
                 case tcp_event_type_t::rail_location: return client.send_to_server(m_data.rail_location);
+                case tcp_event_type_t::motor_status: return client.send_to_server(m_data.motor_status);
                 case tcp_event_type_t::battery_status: return client.send_to_server(m_data.battery_status);
                 default: return tcp_status_t::failure;
             }

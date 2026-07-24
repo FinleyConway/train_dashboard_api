@@ -4,8 +4,6 @@
 
 #include "app/system_bus.hpp"
 #include "tcp/tcp_client.hpp"
-#include "common/messages/handshake.hpp"
-#include "common/messages/motor.hpp"
 #include "common/messages/rail_destination.hpp"
 
 namespace client {

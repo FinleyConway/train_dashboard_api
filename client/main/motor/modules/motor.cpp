@@ -7,6 +7,8 @@ namespace client {
         ESP_ERROR_CHECK_WITHOUT_ABORT(gpio_reset_pin(m_gpio.ain_a));
         ESP_ERROR_CHECK_WITHOUT_ABORT(gpio_reset_pin(m_gpio.ain_b));
         ESP_ERROR_CHECK_WITHOUT_ABORT(gpio_reset_pin(m_gpio.standby));
+
+        ESP_ERROR_CHECK_WITHOUT_ABORT(ledc_stop(c_motor_pwm_mode, m_gpio.pwm_channel, 0));
     }
 
     void motor_t::init(const motor_gpio_t& gpio) {
@@ -96,8 +98,6 @@ namespace client {
         }
 
         m_current_duty = duty;
-
-        ESP_LOGI(c_tag, "Motor duty: %lu", duty);
 
         ESP_ERROR_CHECK(ledc_set_duty(c_motor_pwm_mode, m_gpio.pwm_channel, m_current_duty));
         ESP_ERROR_CHECK(ledc_update_duty(c_motor_pwm_mode, m_gpio.pwm_channel));

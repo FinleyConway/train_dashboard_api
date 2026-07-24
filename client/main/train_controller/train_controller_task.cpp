@@ -4,7 +4,7 @@
 
 #include "app/system_bus.hpp"
 #include "common/api/types.hpp"
-#include "common/messages/motor.hpp"
+#include "common/messages/motor_control.hpp"
 
 namespace client {
     train_controller_task_t::train_controller_task_t(system_bus_t& bus) : m_bus(bus) {

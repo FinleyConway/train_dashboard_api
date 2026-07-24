@@ -3,7 +3,8 @@
 #include "common/core/packet_registry.hpp"
 
 #include "common/messages/handshake.hpp"
-#include "common/messages/motor.hpp"
+#include "common/messages/motor_control.hpp"
+#include "common/messages/motor_status.hpp"
 #include "common/messages/headlight.hpp"
 #include "common/messages/rail_location.hpp"
 #include "common/messages/rail_destination.hpp"
@@ -14,6 +15,7 @@ namespace common {
         esp_init_request_t,
         esp_init_response_t,
         motor_control_t,
+        motor_status_t,
         headlight_control_t,
         rail_location_t,
         rail_destination_t,

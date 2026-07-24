@@ -55,6 +55,8 @@ namespace client {
                 m_motor.set_active_state(motor_control.is_active);
                 m_motor.set_motor_direction(client::motor_direction_t::clockwise); // need to control this via tcp
 
+                send_motor_status();
+
                 if (motor_control.is_active) {
                     adjust_motor(motor_control);
                 }
@@ -71,22 +73,42 @@ namespace client {
 
         const TickType_t start_tick = xTaskGetTickCount();
 
+        const TickType_t log_interval = pdMS_TO_TICKS(100);
+        TickType_t last_log_tick = start_tick;
+
         while (true) {
-            TickType_t now = xTaskGetTickCount();
-            float elapsed_ms = (now - start_tick) * portTICK_PERIOD_MS;
-            float t = elapsed_ms / static_cast<float>(motor_control.ramp_time_ms);
+            const TickType_t now = xTaskGetTickCount();
+            const float elapsed_ms = (now - start_tick) * portTICK_PERIOD_MS;
+            const float t = elapsed_ms / static_cast<float>(motor_control.ramp_time_ms);
 
             if (t >= 1.0f) break;
 
-            float eased = ease(std::clamp(t, 0.0f, 1.0f));
-            float value = std::lerp(start, end, eased);
+            const float eased = ease(std::clamp(t, 0.0f, 1.0f));
+            const float value = std::lerp(start, end, eased);
 
             m_motor.set_motor_duty(static_cast<uint32_t>(std::round(value)));
+
+            if ((now - last_log_tick) >= log_interval) {
+                send_motor_status();
+                last_log_tick = now;
+            }
 
             vTaskDelay(pdMS_TO_TICKS(10));
         }
 
         m_motor.set_motor_duty(motor_control.target_duty);
+
+        send_motor_status();
+    }
+
+    void motor_task_t::send_motor_status() {
+        m_bus.outgoing_messages.send(tcp_event_data_t {
+            common::motor_status_t {
+                .id = m_bus.train_id,
+                .current_duty = m_motor.get_current_duty(),
+                .is_active = m_motor.is_active()
+            }
+        });
     }
 
     float motor_task_t::ease(float x) {

@@ -2,7 +2,7 @@
 
 #include "common/messages/rail_destination.hpp"
 #include "common/messages/handshake.hpp"
-#include "common/messages/motor.hpp"
+#include "common/messages/motor_control.hpp"
 
 namespace client {
     struct system_bus_t;
