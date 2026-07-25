@@ -1,23 +1,23 @@
 #pragma once
 
 #include <vector>
-#include <variant>
 #include <optional>
 
+#include "host/rail_network/rail_connection.hpp"
 #include "host/rail_network/storage/rail.hpp"
 #include "common/api/types.hpp"
 
 namespace host {
     class track_t {
     public:
-        explicit track_t(common::rail_id_t id, common::rail_type_t type) {
-            add(id, type);
+        explicit track_t(const rail_endpoint_t& endpoint) {
+            add(endpoint);
         }
 
-        void add(common::rail_id_t id, common::rail_type_t type) {
+        void add(const rail_endpoint_t& endpoint) {
             m_rails.emplace_back(rail_t {
-                .id = id,
-                .type = type
+                .id = endpoint.id,
+                .type = endpoint.type
             });
         }
 
@@ -34,7 +34,7 @@ namespace host {
                 return false;
             }
 
-            m_rails.at(position).branch = branch;
+            m_rails[position].branch = branch;
 
             return true;
         }

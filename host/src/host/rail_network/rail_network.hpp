@@ -15,7 +15,7 @@ namespace host {
         rail_status_t append_rail(const rail_connection_t& connection) {
             // are we starting from a new track?
             if (!connection.has_rail_pivot()) {
-                return m_storage.create_track(connection.current.id, connection.current.type);
+                return m_storage.create_track(connection.current);
             }
 
             // does the rail reference point exist?

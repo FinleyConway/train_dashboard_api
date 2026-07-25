@@ -40,16 +40,16 @@ namespace host {
             return m_tracks[branch.track].get(branch.position);
         }
 
-        rail_status_t create_track(common::rail_id_t id, common::rail_type_t type) {
-            if (m_rail_lookup.contains(id)) {
+        rail_status_t create_track(const rail_endpoint_t& endpoint) {
+            if (m_rail_lookup.contains(endpoint.id)) {
                 return rail_status_t::rail_already_exists;
             }
 
             // create a new track with an inital track piece
-            m_tracks.emplace_back(id, type);
+            m_tracks.emplace_back(endpoint);
 
             // add rail
-            m_rail_lookup.emplace(id, location_t {
+            m_rail_lookup.emplace(endpoint.id, location_t {
                 .track = m_tracks.size() - 1,
                 .position = 0 // first rail in the newly created track
             });
@@ -65,7 +65,7 @@ namespace host {
             const location_t& location = m_rail_lookup.at(connection.previous.id);
             track_t& track = m_tracks[location.track];
             
-            track.add(connection.current.id, connection.current.type);
+            track.add(connection.current);
 
             const auto& current_location = m_rail_lookup.emplace(
                 connection.current.id, 
@@ -166,12 +166,12 @@ namespace host {
 
             const rail_endpoint_t& branch = connection.branch.value();
 
-            rail_status_t ret = create_track(branch.id, branch.type);
+            rail_status_t ret = create_track(branch);
             if (ret != rail_status_t::success) {
                 return ret;
             }
 
-            m_tracks[location.track].add_branch(
+            bool success = m_tracks[location.track].add_branch(
                 location.position, 
                 rail_branch_t {
                     .track = m_tracks.size() - 1,
@@ -179,6 +179,11 @@ namespace host {
                 }
             );
             
+            if (!success) {
+                return rail_status_t::invalid_connection;
+            }
+
+
             return rail_status_t::success;
         }
 
