@@ -10,19 +10,23 @@
 namespace host {
     struct storage_t {
         float battery_level = 0.0f;
-        std::optional<common::rail_id_t> last_track;
-        std::optional<common::rail_type_t> last_track_type;
+
         uint32_t current_motor_duty = 0;
         bool is_motor_active = false;
+
+        std::optional<common::rail_id_t> last_track;
+        std::optional<common::rail_type_t> last_track_type;
+        std::vector<common::rail_id_t> current_path;
     };
 
     inline void to_json(nlohmann::json& j, const storage_t & e) {
         j = {
             {"battery_level", e.battery_level},
-            {"last_track", e.last_track},
-            {"last_track_type", e.last_track_type},
             {"current_motor_duty", e.current_motor_duty},
             {"is_motor_active", e.is_motor_active},
+            {"last_track", e.last_track},
+            {"last_track_type", e.last_track_type},
+            {"current_path", e.current_path},
         };
     }
 
