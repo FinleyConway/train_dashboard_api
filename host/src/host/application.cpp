@@ -14,8 +14,9 @@
 #include "common/messages/battery_status.hpp"
 
 namespace host {
-    application_t::application_t()
-        : m_handshake(m_tcp_server, std::chrono::seconds(1))
+    application_t::application_t() : 
+        m_handshake(m_tcp_server, std::chrono::seconds(1)),
+        m_connection_monitor(m_tcp_server, std::chrono::minutes(5))
     {
         logger_t::init();
 

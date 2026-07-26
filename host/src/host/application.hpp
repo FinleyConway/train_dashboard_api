@@ -2,6 +2,7 @@
 
 #include <httplib.h>
 
+#include "host/protocol/connection_monitor.hpp"
 #include "host/protocol/handshake_manager.hpp"
 #include "host/rail_network/rail_network.hpp"
 #include "host/networking/tcp/tcp_server.hpp"
@@ -25,5 +26,6 @@ namespace host {
         rail_network_t m_rail_network;
         train_storage_t m_train_storage;
         handshake_manager_t m_handshake;
+        connection_monitor_t m_connection_monitor;
     };
 }

@@ -85,6 +85,24 @@ namespace host {
             return tcp_status_t::success;
         }
 
+        /// @brief Send a message to all clients
+        /// @tparam T A registered message type 
+        /// @param data A registered message type data
+        /// @retval tcp_status_t::success: Operation succeeded
+        /// @retval tcp_status_t::unknown_client: Unknown client id
+        /// @retval tcp_status_t::no_client_connection: Client no longer connected
+        template<typename T>
+        void send_to_all_clients(const T& data) {
+            std::lock_guard lock(m_connection_mutex);
+
+            for (const auto& [_, connection] : m_connections) {
+                connection->send(
+                    m_registry.create(data),
+                    m_registry.packet_size<T>()
+                );
+            }
+        }
+
         /// @brief Allow to stop or start receiving messages from this client
         /// @param enable The toggle state
         void receive_from_client(bool enable);
