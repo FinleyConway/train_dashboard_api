@@ -53,9 +53,6 @@ namespace client {
                 }}
             );
 
-            ESP_LOGI("battery_task", "Battery is current (mV): %d full", millivolts);
-            ESP_LOGI("battery_task", "Battery is current: %.1f full", percentage);
-
             vTaskDelay(pdMS_TO_TICKS(300000)); // block thread for 5 minutes
         }
 
@@ -66,10 +63,10 @@ namespace client {
     constexpr int battery_level_task_t::battery_to_adc_voltage(float voltage) {
         // from voltage divider
         constexpr uint8_t resistor_100 = 100; // from V
-        constexpr uint8_t resistor_10 = 10; // to gnd
+        constexpr uint8_t resistor_47 = 47; // to gnd
 
         // get the voltage drop value
-        const float range = voltage * resistor_10 / (resistor_100 + resistor_10);
+        const float range = voltage * resistor_47 / (resistor_100 + resistor_47);
 
         // convert to millivolts
         return static_cast<int>(range * 1000);
@@ -79,6 +76,8 @@ namespace client {
         // min and max millivolts of the train battery
         constexpr int min_voltage = battery_to_adc_voltage(CONFIG_BATTERY_MINIMUM_SAFE);
         constexpr int max_voltage = battery_to_adc_voltage(CONFIG_BATTERY_FULLY_CHARGED);
+
+        static_assert(max_voltage >= min_voltage, "Max voltage must be bigger then min voltage!");
 
         const float level = (
             static_cast<float>(voltage - min_voltage) /
@@ -90,7 +89,7 @@ namespace client {
     }
 
     void battery_level_task_t::setup_adc() {
-        adc_oneshot_unit_init_cfg_t init_cfg;
+        adc_oneshot_unit_init_cfg_t init_cfg{};
         init_cfg.unit_id = c_adc_unit;
         init_cfg.clk_src = ADC_RTC_CLK_SRC_DEFAULT;
 
@@ -107,7 +106,7 @@ namespace client {
             &chan_cfg
         ));
 
-        adc_cali_line_fitting_config_t cali_config;
+        adc_cali_line_fitting_config_t cali_config{};
         cali_config.unit_id = c_adc_unit;
         cali_config.atten = c_adc_atten;
         cali_config.bitwidth = ADC_BITWIDTH_DEFAULT;
