@@ -1,6 +1,7 @@
 #include "tcp/tasks/tcp_listen_task.hpp"
 
 #include <sdkconfig.h>
+#include <esp_log.h>
 
 #include "tcp/tasks/tcp_manager_task.hpp"
 
@@ -50,6 +51,10 @@ namespace client {
                 }
                 else if (status == tcp_status_t::timeout) {
                     continue; // try again
+                }
+                else if (status == tcp_status_t::unknown_packet) {
+                    ESP_LOGE("tcp_listen", "Recieved a unregistered message!");
+                    break;
                 }
                 else {
                     xTaskNotifyGive(m_manager.get_handle());
