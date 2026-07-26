@@ -43,24 +43,23 @@ namespace client {
 
     void tcp_listen_task_t::run() {
         while (true) {
-            while (true) {
-                tcp_status_t status = m_manager.get_client().listen_to_server();
+            tcp_status_t status = m_manager.get_client().listen_to_server();
 
-                if (status == tcp_status_t::success) {
-                    break;
-                }
-                else if (status == tcp_status_t::timeout) {
-                    continue; // try again
-                }
-                else if (status == tcp_status_t::unknown_packet) {
-                    ESP_LOGE("tcp_listen", "Recieved a unregistered message!");
-                    break;
-                }
-                else {
+            switch (status) {
+                case tcp_status_t::success:
+                    continue; // wait for next message
+
+                case tcp_status_t::timeout:
+                    continue; // retry
+
+                case tcp_status_t::unknown_packet:
+                    ESP_LOGE("tcp_listen", "Received an unregistered message!");
+                    continue; 
+
+                default:
                     xTaskNotifyGive(m_manager.get_handle());
                     vTaskSuspend(nullptr);
                     return;
-                }
             }
         }
 
