@@ -53,15 +53,20 @@ namespace client {
             return ledc_stop(c_pwm_mode, m_pwm_channel, 0);
         }
 
-        esp_err_t set_tone(uint32_t frequency) {
+        esp_err_t set_tone(uint16_t frequency) {
             if (frequency == 0) {
                 return stop();
             }
 
-            return ledc_set_freq(c_pwm_mode, c_timer_num, frequency);
+            esp_err_t err = ledc_set_freq(c_pwm_mode, c_timer_num, frequency);
+            if (err != ESP_OK) {
+                return err;
+            }
+
+            return ledc_update_duty(c_pwm_mode, m_pwm_channel);
         }
 
-        esp_err_t set_tone_delay(uint32_t frequency, TickType_t delay) {
+        esp_err_t set_tone_delay(uint16_t frequency, TickType_t delay) {
             esp_err_t err = set_tone(frequency);
             if (err != ESP_OK) {
                 return err;
@@ -82,6 +87,6 @@ namespace client {
         static constexpr ledc_mode_t c_pwm_mode = LEDC_LOW_SPEED_MODE;
         static constexpr ledc_timer_t c_timer_num = LEDC_TIMER_0;
         static constexpr ledc_timer_bit_t c_pwm_res = LEDC_TIMER_13_BIT;
-        static constexpr uint32_t c_max_duty = ((1 << 13) - 1);
+        static constexpr uint16_t c_max_duty = ((1 << 13) - 1);
     };
 }
